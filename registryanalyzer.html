@@ -9,38 +9,68 @@
 <body>
 <div class="app-wrapper">
 
-  <!-- ── Header ── -->
-  <header>
-    <div class="header-logo">
-      <div class="logo-icon">⬡</div>
-      <div>
-        <div class="logo-name">REGSEC</div>
-        <div class="logo-sub">REGISTRY SECURITY ANALYZER</div>
-      </div>
-    </div>
-    <div class="header-version">v2.4.1 · WINDOWS EDITION</div>
-  </header>
+  <!-- ══════════════════════════════════════════
+       NAVBAR — pill-shaped floating nav
+       ══════════════════════════════════════════ -->
+  <div class="navbar-outer">
+    <nav class="navbar">
 
-  <!-- ── Main ── -->
+      <!-- Logo -->
+      <a class="nav-logo" href="#">
+        <div class="nav-logo-icon">🛡</div>
+      </a>
+
+      <!-- Nav links -->
+      <a class="nav-item active" href="#">
+        Scan <span class="nav-arrow">▾</span>
+      </a>
+      <a class="nav-item" href="#">Benchmarks <span class="nav-arrow">▾</span></a>
+      <a class="nav-item" href="#">Security Tips</a>
+
+      <!-- Language -->
+      <div class="nav-lang">
+        <span class="globe">🌐</span> EN <span class="nav-arrow">▾</span>
+      </div>
+
+      <!-- Divider -->
+      <div class="nav-divider"></div>
+
+      <!-- Sign In -->
+      <button class="nav-signin">Sign In</button>
+
+      <!-- Divider -->
+      <div class="nav-divider"></div>
+
+      <!-- Extra links -->
+      <button class="nav-text-btn">HOME</button>
+      <button class="nav-text-btn">Dashboard</button>
+
+    </nav>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       MAIN
+       ══════════════════════════════════════════ -->
   <main>
 
     <!-- Hero -->
     <section class="hero" id="hero">
-      <h1>Scan Your Registry.<br>Harden Your System.</h1>
-      <p>Export your Windows Registry and upload it here. REGSEC will audit 12 critical security settings and generate an actionable hardening report.</p>
+      <div class="hero-eyebrow">⬡ Windows PC Hardening Tool</div>
+      <h1>REGSEC</h1>
+      <p>Export your Windows Registry and upload it below. REGSEC audits 12 critical security policies and generates a prioritised hardening report — entirely in your browser.</p>
       <div class="hero-tags">
-        <span class="hero-tag">ACCESS CONTROL</span>
-        <span class="hero-tag">NETWORK SECURITY</span>
-        <span class="hero-tag">CREDENTIAL SECURITY</span>
-        <span class="hero-tag">ANTIVIRUS</span>
-        <span class="hero-tag">PATCH MANAGEMENT</span>
+        <span class="hero-tag">Access Control</span>
+        <span class="hero-tag">Network Security</span>
+        <span class="hero-tag">Credential Security</span>
+        <span class="hero-tag">Antivirus</span>
+        <span class="hero-tag">Patch Management</span>
       </div>
     </section>
 
     <!-- Upload Zone -->
     <div class="upload-zone" id="uploadZone">
       <input type="file" id="fileInput" accept=".reg" style="display:none" />
-      <span class="upload-icon">⬆</span>
+      <div class="upload-icon-wrap">⬆</div>
       <div class="upload-title">Drop your .reg file here</div>
       <div class="upload-sub">or click to browse · Windows Registry Export (.reg)</div>
       <div class="upload-hint">
@@ -54,7 +84,7 @@
     <!-- Analyzing -->
     <div class="analyzing-wrap" id="analyzingWrap" style="display:none">
       <div class="spinner"></div>
-      <div class="analyzing-label">ANALYZING REGISTRY</div>
+      <div class="analyzing-label">Analyzing Registry</div>
       <div class="analyzing-sub">Scanning 12 security policies...</div>
     </div>
 
@@ -64,22 +94,22 @@
       <!-- Score Card -->
       <div class="score-card">
         <div class="score-ring-wrap">
-          <svg width="140" height="140" viewBox="0 0 140 140">
-            <circle cx="70" cy="70" r="54" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10"/>
-            <circle id="scoreArc" cx="70" cy="70" r="54" fill="none"
-              stroke="#00d4aa" stroke-width="10"
-              stroke-dasharray="0 339.3"
+          <svg width="148" height="148" viewBox="0 0 148 148">
+            <circle cx="74" cy="74" r="58" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="10"/>
+            <circle id="scoreArc" cx="74" cy="74" r="58" fill="none"
+              stroke="#7c5aff" stroke-width="10"
+              stroke-dasharray="0 364.4"
               stroke-linecap="round"
               style="transition: stroke-dasharray 1.2s cubic-bezier(.4,0,.2,1), stroke 0.6s;
-                     filter: drop-shadow(0 0 8px #00d4aa);"/>
+                     filter: drop-shadow(0 0 10px #7c5aff);"/>
           </svg>
           <div class="score-ring-center">
-            <span class="score-number" id="scoreNumber" style="color:#00d4aa">0</span>
+            <span class="score-number" id="scoreNumber" style="color:#7c5aff">0</span>
             <span class="score-denom">/ 100</span>
           </div>
         </div>
         <div class="score-meta">
-          <div class="score-label-sm">SECURITY RATING</div>
+          <div class="score-label-sm">Security Rating</div>
           <div class="score-rating" id="scoreRating">—</div>
           <div class="score-detail" id="scoreDetail"></div>
           <div class="cat-pills" id="catPills"></div>
@@ -88,7 +118,7 @@
 
       <!-- Filter Bar -->
       <div class="filter-bar">
-        <span class="filter-label">FILTER:</span>
+        <span class="filter-label">Filter:</span>
         <button class="filter-btn active" data-filter="all">All Checks</button>
         <button class="filter-btn" data-filter="fail">Failed Only</button>
         <button class="filter-btn" data-filter="pass">Passed Only</button>
@@ -98,22 +128,22 @@
       <!-- Checks List -->
       <div class="checks-list" id="checksList"></div>
 
-      <!-- Footer note -->
+      <!-- Footer -->
       <div class="footer-note">
-        ⚠ This tool analyzes exported registry data locally in your browser. No data is uploaded to any server.<br>
-        Always back up your registry before making changes. Some settings may vary by Windows version.
+        ⚠ All analysis happens locally in your browser — no registry data is sent to any server.<br>
+        Always back up your registry before making changes. Settings may vary by Windows version.
       </div>
     </div>
 
   </main>
 </div>
 
+<!-- ══════════════════════════════════════════
+     ALL JAVASCRIPT
+     ══════════════════════════════════════════ -->
 <script>
-// ============================================================
-//  REGSEC — All JavaScript
-// ============================================================
 
-// ── Security Check Definitions ──────────────────────────────
+// ─── Security Check Definitions ────────────────────────────────────────────
 const SECURITY_CHECKS = [
   {
     id: "uac",
@@ -123,7 +153,7 @@ const SECURITY_CHECKS = [
     goodValue: "1",
     weight: 8,
     category: "Access Control",
-    description: "UAC prevents unauthorized changes to the operating system by prompting for elevation when needed.",
+    description: "UAC prevents unauthorized changes to the operating system by prompting for elevation.",
     fix: "Set EnableLUA to 1 in HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
     severity: "critical",
   },
@@ -147,7 +177,7 @@ const SECURITY_CHECKS = [
     goodValue: "1",
     weight: 7,
     category: "Network Security",
-    description: "Windows Firewall on private networks must be active to prevent unauthorized access.",
+    description: "Windows Firewall on private networks must remain active to prevent unauthorized access.",
     fix: "Set EnableFirewall to 1 under StandardProfile in the Firewall policy registry key.",
     severity: "critical",
   },
@@ -183,8 +213,8 @@ const SECURITY_CHECKS = [
     goodValue: "1",
     weight: 6,
     category: "Remote Access",
-    description: "Disabling RDP reduces attack surface. If RDP is needed, enforce Network Level Authentication.",
-    fix: "Set fDenyTSConnections to 1 if RDP is not required, or ensure NLA is enforced.",
+    description: "Disabling RDP reduces attack surface. If needed, ensure Network Level Authentication is enforced.",
+    fix: "Set fDenyTSConnections to 1 if RDP is not required, or enforce NLA.",
     severity: "high",
   },
   {
@@ -195,7 +225,7 @@ const SECURITY_CHECKS = [
     goodValue: "1",
     weight: 7,
     category: "Credential Security",
-    description: "LM hashes are cryptographically weak and can be cracked in seconds using modern hardware.",
+    description: "LM hashes are cryptographically weak and can be cracked in seconds with modern hardware.",
     fix: "Set NoLMHash to 1 under HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa.",
     severity: "high",
   },
@@ -220,7 +250,7 @@ const SECURITY_CHECKS = [
     weight: 9,
     category: "Antivirus",
     description: "Real-time protection continuously monitors files and processes for malware signatures.",
-    fix: "Set DisableRealtimeMonitoring to 0 or remove the key entirely to enable Defender.",
+    fix: "Set DisableRealtimeMonitoring to 0 or remove the key entirely to re-enable Defender.",
     severity: "critical",
   },
   {
@@ -231,7 +261,7 @@ const SECURITY_CHECKS = [
     goodValue: "0",
     weight: 7,
     category: "Patch Management",
-    description: "Keeping Windows updated ensures known vulnerabilities are patched promptly.",
+    description: "Keeping Windows updated ensures known security vulnerabilities are patched promptly.",
     fix: "Set NoAutoUpdate to 0 or remove the policy key to allow automatic Windows Updates.",
     severity: "high",
   },
@@ -244,7 +274,7 @@ const SECURITY_CHECKS = [
     weight: 5,
     category: "Execution Control",
     description: "Restricting Windows Script Host prevents malicious VBScript and JScript from running.",
-    fix: "Set Enabled to 0 under Windows Script Host Settings to block script execution system-wide.",
+    fix: "Set Enabled to 0 under Windows Script Host Settings to block script execution.",
     severity: "medium",
   },
   {
@@ -255,37 +285,38 @@ const SECURITY_CHECKS = [
     goodValue: "1",
     weight: 5,
     category: "Execution Control",
-    description: "Safe DLL Search Mode prevents DLL hijacking by searching system directories before the current directory.",
+    description: "Safe DLL Search Mode prevents DLL hijacking by prioritising system directories.",
     fix: "Set SafeDllSearchMode to 1 under HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager.",
     severity: "medium",
   },
 ];
 
-const CIRC = 2 * Math.PI * 54; // ≈ 339.3
+// r=58, circumference = 2π×58 ≈ 364.4
+const CIRC = 2 * Math.PI * 58;
 
-// ── DOM References ───────────────────────────────────────────
-const uploadZone   = document.getElementById("uploadZone");
-const fileInput    = document.getElementById("fileInput");
-const errorBox     = document.getElementById("errorBox");
-const analyzingWrap= document.getElementById("analyzingWrap");
-const resultsWrap  = document.getElementById("resultsWrap");
-const hero         = document.getElementById("hero");
-const scoreArc     = document.getElementById("scoreArc");
-const scoreNumber  = document.getElementById("scoreNumber");
-const scoreRating  = document.getElementById("scoreRating");
-const scoreDetail  = document.getElementById("scoreDetail");
-const catPills     = document.getElementById("catPills");
-const checksList   = document.getElementById("checksList");
-const newScanBtn   = document.getElementById("newScanBtn");
+// ─── DOM References ─────────────────────────────────────────────────────────
+const uploadZone    = document.getElementById("uploadZone");
+const fileInput     = document.getElementById("fileInput");
+const errorBox      = document.getElementById("errorBox");
+const analyzingWrap = document.getElementById("analyzingWrap");
+const resultsWrap   = document.getElementById("resultsWrap");
+const hero          = document.getElementById("hero");
+const scoreArc      = document.getElementById("scoreArc");
+const scoreNumber   = document.getElementById("scoreNumber");
+const scoreRating   = document.getElementById("scoreRating");
+const scoreDetail   = document.getElementById("scoreDetail");
+const catPills      = document.getElementById("catPills");
+const checksList    = document.getElementById("checksList");
+const newScanBtn    = document.getElementById("newScanBtn");
 
-// ── State ────────────────────────────────────────────────────
+// ─── State ───────────────────────────────────────────────────────────────────
 let currentResults = [];
 let currentFilter  = "all";
 
-// ── Parse Registry ───────────────────────────────────────────
+// ─── Parse .reg file ─────────────────────────────────────────────────────────
 function parseRegistry(text) {
   const findings = {};
-  const lines = text.split(/\r?\n/);
+  const lines    = text.split(/\r?\n/);
   let currentPath = "";
 
   for (const line of lines) {
@@ -295,29 +326,25 @@ function parseRegistry(text) {
     const valMatch = line.match(/^"([^"]+)"=(?:dword:([0-9a-fA-F]+)|"([^"]*)")/);
     if (valMatch && currentPath) {
       const lookupKey = `${currentPath}::${valMatch[1]}`.toLowerCase();
-      const val = valMatch[2]
-        ? parseInt(valMatch[2], 16).toString()
-        : valMatch[3];
+      const val = valMatch[2] ? parseInt(valMatch[2], 16).toString() : valMatch[3];
       findings[lookupKey] = val;
     }
   }
   return findings;
 }
 
-// ── Analyze ──────────────────────────────────────────────────
+// ─── Run Analysis ────────────────────────────────────────────────────────────
 function analyzeRegistry(text) {
-  const data = parseRegistry(text);
-  const results = [];
-  let totalWeight = 0;
-  let passedWeight = 0;
+  const data         = parseRegistry(text);
+  const results      = [];
+  let totalWeight    = 0;
+  let passedWeight   = 0;
 
   for (const check of SECURITY_CHECKS) {
     totalWeight += check.weight;
     const lookupKey = `${check.path}::${check.key}`.toLowerCase();
-    const found = Object.prototype.hasOwnProperty.call(data, lookupKey)
-      ? data[lookupKey]
-      : null;
-    const passed = found === check.goodValue;
+    const found     = Object.prototype.hasOwnProperty.call(data, lookupKey) ? data[lookupKey] : null;
+    const passed    = found === check.goodValue;
     if (passed) passedWeight += check.weight;
     results.push({ ...check, found, passed });
   }
@@ -326,11 +353,11 @@ function analyzeRegistry(text) {
   return { results, score };
 }
 
-// ── Score colour helper ───────────────────────────────────────
+// ─── Score Helpers ────────────────────────────────────────────────────────────
 function scoreColor(score) {
-  if (score >= 80) return "#00d4aa";
-  if (score >= 50) return "#f0c040";
-  return "#ff3b5c";
+  if (score >= 80) return "#34d399";
+  if (score >= 50) return "#fbbf24";
+  return "#f43f5e";
 }
 
 function scoreRatingText(score) {
@@ -339,64 +366,64 @@ function scoreRatingText(score) {
   return "VULNERABLE";
 }
 
-// ── Render Score Ring ─────────────────────────────────────────
+// ─── Render Score Ring ────────────────────────────────────────────────────────
 function renderScore(score) {
   const color = scoreColor(score);
   const dash  = (score / 100) * CIRC;
 
-  // Animate number count-up
+  // Count-up animation
   let current = 0;
-  const step = Math.ceil(score / 40);
-  const interval = setInterval(() => {
+  const step  = Math.max(1, Math.ceil(score / 45));
+  const timer = setInterval(() => {
     current = Math.min(current + step, score);
     scoreNumber.textContent = current;
-    if (current >= score) clearInterval(interval);
-  }, 30);
+    if (current >= score) clearInterval(timer);
+  }, 28);
 
-  // Ring
+  // Ring draw
   setTimeout(() => {
     scoreArc.style.strokeDasharray = `${dash} ${CIRC}`;
-    scoreArc.style.stroke = color;
-    scoreArc.style.filter = `drop-shadow(0 0 8px ${color})`;
-  }, 100);
+    scoreArc.style.stroke          = color;
+    scoreArc.style.filter          = `drop-shadow(0 0 10px ${color})`;
+  }, 120);
 
-  scoreNumber.style.color = color;
-  scoreRating.textContent = scoreRatingText(score);
-  scoreRating.style.color = color;
+  scoreNumber.style.color  = color;
+  scoreRating.textContent  = scoreRatingText(score);
+  scoreRating.style.color  = color;
 }
 
-// ── Render Category Pills ─────────────────────────────────────
+// ─── Render Category Pills ────────────────────────────────────────────────────
 function renderCatPills(results) {
   const cats = [...new Set(results.map(r => r.category))];
   catPills.innerHTML = "";
   for (const cat of cats) {
     const checks  = results.filter(r => r.category === cat);
-    const passAll = checks.every(r => r.passed);
-    const pill = document.createElement("div");
-    pill.className = `cat-pill${passAll ? " all-pass" : ""}`;
-    pill.textContent = `${cat}: ${checks.filter(r=>r.passed).length}/${checks.length}`;
+    const allPass = checks.every(r => r.passed);
+    const pill    = document.createElement("div");
+    pill.className = `cat-pill${allPass ? " all-pass" : ""}`;
+    pill.textContent = `${cat}: ${checks.filter(r => r.passed).length}/${checks.length}`;
     catPills.appendChild(pill);
   }
 }
 
-// ── Render Check Row ──────────────────────────────────────────
+// ─── Render Single Check Row ──────────────────────────────────────────────────
 function renderCheckRow(check, index) {
   const row = document.createElement("div");
   row.className = "check-row";
   row.style.animationDelay = `${index * 0.04}s`;
 
-  const foundClass = check.found === null
-    ? "not-found"
-    : check.passed ? "found-ok" : "found-bad";
+  const foundClass = check.found === null ? "not-found"
+                   : check.passed        ? "found-ok"
+                                         : "found-bad";
 
   const foundText = check.found !== null
     ? `${check.key} = ${check.found}`
     : "Key not found";
 
-  const remediationHTML = !check.passed
+  const remHTML = !check.passed
     ? `<div class="remediation-box">
-         <div class="remediation-label">⚡ REMEDIATION</div>
-         <div class="remediation-text">${escapeHTML(check.fix)}</div>
+         <div class="remediation-label">⚡ Remediation</div>
+         <div class="remediation-text">${escHTML(check.fix)}</div>
        </div>`
     : "";
 
@@ -404,8 +431,8 @@ function renderCheckRow(check, index) {
     <div class="check-header" role="button" tabindex="0" aria-expanded="false">
       <div class="check-status-dot ${check.passed ? "pass" : "fail"}">${check.passed ? "✓" : "✗"}</div>
       <div class="check-info">
-        <div class="check-name">${escapeHTML(check.name)}</div>
-        <div class="check-path">${escapeHTML(check.path)}</div>
+        <div class="check-name">${escHTML(check.name)}</div>
+        <div class="check-path">${escHTML(check.path)}</div>
       </div>
       <div class="check-badges">
         <span class="severity-badge ${check.severity}">${check.severity.toUpperCase()}</span>
@@ -414,18 +441,18 @@ function renderCheckRow(check, index) {
       </div>
     </div>
     <div class="check-detail" style="display:none">
-      <p class="check-description">${escapeHTML(check.description)}</p>
+      <p class="check-description">${escHTML(check.description)}</p>
       <div class="check-values">
         <div class="value-box">
-          <div class="value-label">EXPECTED</div>
-          <div class="value-data expected">${escapeHTML(check.key)} = ${escapeHTML(check.goodValue)}</div>
+          <div class="value-label">Expected</div>
+          <div class="value-data expected">${escHTML(check.key)} = ${escHTML(check.goodValue)}</div>
         </div>
         <div class="value-box">
-          <div class="value-label">DETECTED</div>
-          <div class="value-data ${foundClass}">${escapeHTML(foundText)}</div>
+          <div class="value-label">Detected</div>
+          <div class="value-data ${foundClass}">${escHTML(foundText)}</div>
         </div>
       </div>
-      ${remediationHTML}
+      ${remHTML}
     </div>
   `;
 
@@ -447,7 +474,7 @@ function renderCheckRow(check, index) {
   return row;
 }
 
-// ── Render Checks List ────────────────────────────────────────
+// ─── Render Checks List ───────────────────────────────────────────────────────
 function renderChecksList() {
   checksList.innerHTML = "";
   const filtered = currentResults.filter(r => {
@@ -455,13 +482,10 @@ function renderChecksList() {
     if (currentFilter === "fail") return !r.passed;
     return true;
   });
-
-  filtered.forEach((check, i) => {
-    checksList.appendChild(renderCheckRow(check, i));
-  });
+  filtered.forEach((check, i) => checksList.appendChild(renderCheckRow(check, i)));
 }
 
-// ── Show Results ──────────────────────────────────────────────
+// ─── Show Results ─────────────────────────────────────────────────────────────
 function showResults(analysis) {
   currentResults = analysis.results;
 
@@ -469,10 +493,8 @@ function showResults(analysis) {
   hide(hero);
   show(resultsWrap);
 
-  // Score
   renderScore(analysis.score);
 
-  // Detail line
   const passCount = analysis.results.filter(r => r.passed).length;
   const critFail  = analysis.results.filter(r => !r.passed && r.severity === "critical").length;
   scoreDetail.innerHTML =
@@ -483,7 +505,7 @@ function showResults(analysis) {
   renderChecksList();
 }
 
-// ── Handle File ───────────────────────────────────────────────
+// ─── Handle File ──────────────────────────────────────────────────────────────
 function handleFile(file) {
   if (!file) return;
 
@@ -494,6 +516,7 @@ function handleFile(file) {
   show(analyzingWrap);
 
   const reader = new FileReader();
+
   reader.onload = (e) => {
     const text = e.target.result;
 
@@ -501,17 +524,16 @@ function handleFile(file) {
       hide(analyzingWrap);
       show(uploadZone);
       show(hero);
-      showError("File does not appear to be a valid Windows Registry export (.reg file). Please export from regedit.exe and try again.");
+      showError("File does not appear to be a valid Windows Registry export (.reg). Please export from regedit.exe.");
       return;
     }
 
-    // Simulate scan delay for UX
     setTimeout(() => {
       try {
         const analysis = analyzeRegistry(text);
         hide(analyzingWrap);
         showResults(analysis);
-      } catch (err) {
+      } catch {
         hide(analyzingWrap);
         show(uploadZone);
         show(hero);
@@ -530,32 +552,25 @@ function handleFile(file) {
   reader.readAsText(file);
 }
 
-// ── Drag & Drop ───────────────────────────────────────────────
+// ─── Drag & Drop ──────────────────────────────────────────────────────────────
 uploadZone.addEventListener("dragover", (e) => {
   e.preventDefault();
   uploadZone.classList.add("dragging");
 });
-
-uploadZone.addEventListener("dragleave", () => {
-  uploadZone.classList.remove("dragging");
-});
-
+uploadZone.addEventListener("dragleave", () => uploadZone.classList.remove("dragging"));
 uploadZone.addEventListener("drop", (e) => {
   e.preventDefault();
   uploadZone.classList.remove("dragging");
   const file = e.dataTransfer.files[0];
   if (file) handleFile(file);
 });
-
 uploadZone.addEventListener("click", () => fileInput.click());
-
 fileInput.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (file) handleFile(file);
-  fileInput.value = ""; // reset so same file can be re-selected
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+  fileInput.value = "";
 });
 
-// ── Filter Buttons ────────────────────────────────────────────
+// ─── Filter Buttons ───────────────────────────────────────────────────────────
 document.querySelectorAll(".filter-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
@@ -565,7 +580,7 @@ document.querySelectorAll(".filter-btn").forEach(btn => {
   });
 });
 
-// ── New Scan ──────────────────────────────────────────────────
+// ─── New Scan ─────────────────────────────────────────────────────────────────
 newScanBtn.addEventListener("click", () => {
   hide(resultsWrap);
   show(uploadZone);
@@ -574,12 +589,12 @@ newScanBtn.addEventListener("click", () => {
   currentFilter  = "all";
   document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
   document.querySelector('[data-filter="all"]').classList.add("active");
-  // Reset ring
   scoreArc.style.strokeDasharray = `0 ${CIRC}`;
   scoreNumber.textContent = "0";
+  scoreRating.textContent = "—";
 });
 
-// ── Helpers ───────────────────────────────────────────────────
+// ─── Utilities ────────────────────────────────────────────────────────────────
 function show(el) { el.style.display = ""; }
 function hide(el) { el.style.display = "none"; }
 
@@ -587,19 +602,19 @@ function showError(msg) {
   errorBox.textContent = "⚠ " + msg;
   show(errorBox);
 }
-
 function hideError() {
-  errorBox.textContent = "";
   hide(errorBox);
+  errorBox.textContent = "";
 }
 
-function escapeHTML(str) {
+function escHTML(str) {
   return String(str)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
+
 </script>
 </body>
 </html>
