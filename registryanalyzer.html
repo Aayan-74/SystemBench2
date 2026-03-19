@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>REGSEC — Registry Security Analyzer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="app-wrapper">
+
+  <!-- ── Header ── -->
+  <header>
+    <div class="header-logo">
+      <div class="logo-icon">⬡</div>
+      <div>
+        <div class="logo-name">REGSEC</div>
+        <div class="logo-sub">REGISTRY SECURITY ANALYZER</div>
+      </div>
+    </div>
+    <div class="header-version">v2.4.1 · WINDOWS EDITION</div>
+  </header>
+
+  <!-- ── Main ── -->
+  <main>
+
+    <!-- Hero -->
+    <section class="hero" id="hero">
+      <h1>Scan Your Registry.<br>Harden Your System.</h1>
+      <p>Export your Windows Registry and upload it here. REGSEC will audit 12 critical security settings and generate an actionable hardening report.</p>
+      <div class="hero-tags">
+        <span class="hero-tag">ACCESS CONTROL</span>
+        <span class="hero-tag">NETWORK SECURITY</span>
+        <span class="hero-tag">CREDENTIAL SECURITY</span>
+        <span class="hero-tag">ANTIVIRUS</span>
+        <span class="hero-tag">PATCH MANAGEMENT</span>
+      </div>
+    </section>
+
+    <!-- Upload Zone -->
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept=".reg" style="display:none" />
+      <span class="upload-icon">⬆</span>
+      <div class="upload-title">Drop your .reg file here</div>
+      <div class="upload-sub">or click to browse · Windows Registry Export (.reg)</div>
+      <div class="upload-hint">
+        To export: Open <span>regedit.exe</span> → File → Export → All → Save as .reg
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-box" id="errorBox" style="display:none"></div>
+
+    <!-- Analyzing -->
+    <div class="analyzing-wrap" id="analyzingWrap" style="display:none">
+      <div class="spinner"></div>
+      <div class="analyzing-label">ANALYZING REGISTRY</div>
+      <div class="analyzing-sub">Scanning 12 security policies...</div>
+    </div>
+
+    <!-- Results -->
+    <div class="results-wrap" id="resultsWrap" style="display:none">
+
+      <!-- Score Card -->
+      <div class="score-card">
+        <div class="score-ring-wrap">
+          <svg width="140" height="140" viewBox="0 0 140 140">
+            <circle cx="70" cy="70" r="54" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10"/>
+            <circle id="scoreArc" cx="70" cy="70" r="54" fill="none"
+              stroke="#00d4aa" stroke-width="10"
+              stroke-dasharray="0 339.3"
+              stroke-linecap="round"
+              style="transition: stroke-dasharray 1.2s cubic-bezier(.4,0,.2,1), stroke 0.6s;
+                     filter: drop-shadow(0 0 8px #00d4aa);"/>
+          </svg>
+          <div class="score-ring-center">
+            <span class="score-number" id="scoreNumber" style="color:#00d4aa">0</span>
+            <span class="score-denom">/ 100</span>
+          </div>
+        </div>
+        <div class="score-meta">
+          <div class="score-label-sm">SECURITY RATING</div>
+          <div class="score-rating" id="scoreRating">—</div>
+          <div class="score-detail" id="scoreDetail"></div>
+          <div class="cat-pills" id="catPills"></div>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <span class="filter-label">FILTER:</span>
+        <button class="filter-btn active" data-filter="all">All Checks</button>
+        <button class="filter-btn" data-filter="fail">Failed Only</button>
+        <button class="filter-btn" data-filter="pass">Passed Only</button>
+        <button class="new-scan-btn" id="newScanBtn">↩ New Scan</button>
+      </div>
+
+      <!-- Checks List -->
+      <div class="checks-list" id="checksList"></div>
+
+      <!-- Footer note -->
+      <div class="footer-note">
+        ⚠ This tool analyzes exported registry data locally in your browser. No data is uploaded to any server.<br>
+        Always back up your registry before making changes. Some settings may vary by Windows version.
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ============================================================
+//  REGSEC — All JavaScript
+// ============================================================
+
+// ── Security Check Definitions ──────────────────────────────
+const SECURITY_CHECKS = [
+  {
+    id: "uac",
+    name: "User Account Control (UAC)",
+    path: "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
+    key: "EnableLUA",
+    goodValue: "1",
+    weight: 8,
+    category: "Access Control",
+    description: "UAC prevents unauthorized changes to the operating system by prompting for elevation when needed.",
+    fix: "Set EnableLUA to 1 in HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
+    severity: "critical",
+  },
+  {
+    id: "firewall_domain",
+    name: "Firewall (Domain Profile)",
+    path: "HKLM\\SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy\\DomainProfile",
+    key: "EnableFirewall",
+    goodValue: "1",
+    weight: 7,
+    category: "Network Security",
+    description: "Windows Firewall on the domain profile blocks unauthorized inbound network connections.",
+    fix: "Set EnableFirewall to 1 under DomainProfile in the Firewall policy registry key.",
+    severity: "critical",
+  },
+  {
+    id: "firewall_private",
+    name: "Firewall (Private Profile)",
+    path: "HKLM\\SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy\\StandardProfile",
+    key: "EnableFirewall",
+    goodValue: "1",
+    weight: 7,
+    category: "Network Security",
+    description: "Windows Firewall on private networks must be active to prevent unauthorized access.",
+    fix: "Set EnableFirewall to 1 under StandardProfile in the Firewall policy registry key.",
+    severity: "critical",
+  },
+  {
+    id: "autorun",
+    name: "AutoRun Disabled",
+    path: "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+    key: "NoDriveTypeAutoRun",
+    goodValue: "255",
+    weight: 6,
+    category: "Removable Media",
+    description: "Disabling AutoRun prevents malware from executing automatically from USB drives or CDs.",
+    fix: "Set NoDriveTypeAutoRun to 255 (0xFF) to disable AutoRun for all drive types.",
+    severity: "high",
+  },
+  {
+    id: "smb1",
+    name: "SMBv1 Disabled",
+    path: "HKLM\\SYSTEM\\CurrentControlSet\\Services\\LanmanServer\\Parameters",
+    key: "SMB1",
+    goodValue: "0",
+    weight: 8,
+    category: "Network Security",
+    description: "SMBv1 is a legacy protocol exploited by ransomware such as WannaCry and NotPetya.",
+    fix: "Set SMB1 to 0 under LanmanServer\\Parameters to disable this vulnerable protocol.",
+    severity: "critical",
+  },
+  {
+    id: "rdp",
+    name: "Remote Desktop Disabled",
+    path: "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Terminal Server",
+    key: "fDenyTSConnections",
+    goodValue: "1",
+    weight: 6,
+    category: "Remote Access",
+    description: "Disabling RDP reduces attack surface. If RDP is needed, enforce Network Level Authentication.",
+    fix: "Set fDenyTSConnections to 1 if RDP is not required, or ensure NLA is enforced.",
+    severity: "high",
+  },
+  {
+    id: "lm_hash",
+    name: "LM Hash Storage Disabled",
+    path: "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa",
+    key: "NoLMHash",
+    goodValue: "1",
+    weight: 7,
+    category: "Credential Security",
+    description: "LM hashes are cryptographically weak and can be cracked in seconds using modern hardware.",
+    fix: "Set NoLMHash to 1 under HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa.",
+    severity: "high",
+  },
+  {
+    id: "ntlmv2",
+    name: "NTLMv2 Authentication Enforced",
+    path: "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa",
+    key: "LmCompatibilityLevel",
+    goodValue: "5",
+    weight: 6,
+    category: "Credential Security",
+    description: "NTLMv2 provides significantly stronger authentication than legacy NTLM versions.",
+    fix: "Set LmCompatibilityLevel to 5 to send NTLMv2 only and refuse LM and NTLM.",
+    severity: "medium",
+  },
+  {
+    id: "defender",
+    name: "Windows Defender Real-Time Protection",
+    path: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection",
+    key: "DisableRealtimeMonitoring",
+    goodValue: "0",
+    weight: 9,
+    category: "Antivirus",
+    description: "Real-time protection continuously monitors files and processes for malware signatures.",
+    fix: "Set DisableRealtimeMonitoring to 0 or remove the key entirely to enable Defender.",
+    severity: "critical",
+  },
+  {
+    id: "windows_update",
+    name: "Automatic Updates Enabled",
+    path: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU",
+    key: "NoAutoUpdate",
+    goodValue: "0",
+    weight: 7,
+    category: "Patch Management",
+    description: "Keeping Windows updated ensures known vulnerabilities are patched promptly.",
+    fix: "Set NoAutoUpdate to 0 or remove the policy key to allow automatic Windows Updates.",
+    severity: "high",
+  },
+  {
+    id: "script_blocking",
+    name: "Script Host Restrictions",
+    path: "HKLM\\SOFTWARE\\Microsoft\\Windows Script Host\\Settings",
+    key: "Enabled",
+    goodValue: "0",
+    weight: 5,
+    category: "Execution Control",
+    description: "Restricting Windows Script Host prevents malicious VBScript and JScript from running.",
+    fix: "Set Enabled to 0 under Windows Script Host Settings to block script execution system-wide.",
+    severity: "medium",
+  },
+  {
+    id: "safe_search",
+    name: "Safe DLL Search Mode",
+    path: "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager",
+    key: "SafeDllSearchMode",
+    goodValue: "1",
+    weight: 5,
+    category: "Execution Control",
+    description: "Safe DLL Search Mode prevents DLL hijacking by searching system directories before the current directory.",
+    fix: "Set SafeDllSearchMode to 1 under HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager.",
+    severity: "medium",
+  },
+];
+
+const CIRC = 2 * Math.PI * 54; // ≈ 339.3
+
+// ── DOM References ───────────────────────────────────────────
+const uploadZone   = document.getElementById("uploadZone");
+const fileInput    = document.getElementById("fileInput");
+const errorBox     = document.getElementById("errorBox");
+const analyzingWrap= document.getElementById("analyzingWrap");
+const resultsWrap  = document.getElementById("resultsWrap");
+const hero         = document.getElementById("hero");
+const scoreArc     = document.getElementById("scoreArc");
+const scoreNumber  = document.getElementById("scoreNumber");
+const scoreRating  = document.getElementById("scoreRating");
+const scoreDetail  = document.getElementById("scoreDetail");
+const catPills     = document.getElementById("catPills");
+const checksList   = document.getElementById("checksList");
+const newScanBtn   = document.getElementById("newScanBtn");
+
+// ── State ────────────────────────────────────────────────────
+let currentResults = [];
+let currentFilter  = "all";
+
+// ── Parse Registry ───────────────────────────────────────────
+function parseRegistry(text) {
+  const findings = {};
+  const lines = text.split(/\r?\n/);
+  let currentPath = "";
+
+  for (const line of lines) {
+    const pathMatch = line.match(/^\[(.+)\]$/);
+    if (pathMatch) { currentPath = pathMatch[1]; continue; }
+
+    const valMatch = line.match(/^"([^"]+)"=(?:dword:([0-9a-fA-F]+)|"([^"]*)")/);
+    if (valMatch && currentPath) {
+      const lookupKey = `${currentPath}::${valMatch[1]}`.toLowerCase();
+      const val = valMatch[2]
+        ? parseInt(valMatch[2], 16).toString()
+        : valMatch[3];
+      findings[lookupKey] = val;
+    }
+  }
+  return findings;
+}
+
+// ── Analyze ──────────────────────────────────────────────────
+function analyzeRegistry(text) {
+  const data = parseRegistry(text);
+  const results = [];
+  let totalWeight = 0;
+  let passedWeight = 0;
+
+  for (const check of SECURITY_CHECKS) {
+    totalWeight += check.weight;
+    const lookupKey = `${check.path}::${check.key}`.toLowerCase();
+    const found = Object.prototype.hasOwnProperty.call(data, lookupKey)
+      ? data[lookupKey]
+      : null;
+    const passed = found === check.goodValue;
+    if (passed) passedWeight += check.weight;
+    results.push({ ...check, found, passed });
+  }
+
+  const score = Math.round((passedWeight / totalWeight) * 100);
+  return { results, score };
+}
+
+// ── Score colour helper ───────────────────────────────────────
+function scoreColor(score) {
+  if (score >= 80) return "#00d4aa";
+  if (score >= 50) return "#f0c040";
+  return "#ff3b5c";
+}
+
+function scoreRatingText(score) {
+  if (score >= 80) return "SECURE";
+  if (score >= 50) return "AT RISK";
+  return "VULNERABLE";
+}
+
+// ── Render Score Ring ─────────────────────────────────────────
+function renderScore(score) {
+  const color = scoreColor(score);
+  const dash  = (score / 100) * CIRC;
+
+  // Animate number count-up
+  let current = 0;
+  const step = Math.ceil(score / 40);
+  const interval = setInterval(() => {
+    current = Math.min(current + step, score);
+    scoreNumber.textContent = current;
+    if (current >= score) clearInterval(interval);
+  }, 30);
+
+  // Ring
+  setTimeout(() => {
+    scoreArc.style.strokeDasharray = `${dash} ${CIRC}`;
+    scoreArc.style.stroke = color;
+    scoreArc.style.filter = `drop-shadow(0 0 8px ${color})`;
+  }, 100);
+
+  scoreNumber.style.color = color;
+  scoreRating.textContent = scoreRatingText(score);
+  scoreRating.style.color = color;
+}
+
+// ── Render Category Pills ─────────────────────────────────────
+function renderCatPills(results) {
+  const cats = [...new Set(results.map(r => r.category))];
+  catPills.innerHTML = "";
+  for (const cat of cats) {
+    const checks  = results.filter(r => r.category === cat);
+    const passAll = checks.every(r => r.passed);
+    const pill = document.createElement("div");
+    pill.className = `cat-pill${passAll ? " all-pass" : ""}`;
+    pill.textContent = `${cat}: ${checks.filter(r=>r.passed).length}/${checks.length}`;
+    catPills.appendChild(pill);
+  }
+}
+
+// ── Render Check Row ──────────────────────────────────────────
+function renderCheckRow(check, index) {
+  const row = document.createElement("div");
+  row.className = "check-row";
+  row.style.animationDelay = `${index * 0.04}s`;
+
+  const foundClass = check.found === null
+    ? "not-found"
+    : check.passed ? "found-ok" : "found-bad";
+
+  const foundText = check.found !== null
+    ? `${check.key} = ${check.found}`
+    : "Key not found";
+
+  const remediationHTML = !check.passed
+    ? `<div class="remediation-box">
+         <div class="remediation-label">⚡ REMEDIATION</div>
+         <div class="remediation-text">${escapeHTML(check.fix)}</div>
+       </div>`
+    : "";
+
+  row.innerHTML = `
+    <div class="check-header" role="button" tabindex="0" aria-expanded="false">
+      <div class="check-status-dot ${check.passed ? "pass" : "fail"}">${check.passed ? "✓" : "✗"}</div>
+      <div class="check-info">
+        <div class="check-name">${escapeHTML(check.name)}</div>
+        <div class="check-path">${escapeHTML(check.path)}</div>
+      </div>
+      <div class="check-badges">
+        <span class="severity-badge ${check.severity}">${check.severity.toUpperCase()}</span>
+        <span class="check-result ${check.passed ? "pass" : "fail"}">${check.passed ? "PASS" : "FAIL"}</span>
+        <span class="check-chevron">▼</span>
+      </div>
+    </div>
+    <div class="check-detail" style="display:none">
+      <p class="check-description">${escapeHTML(check.description)}</p>
+      <div class="check-values">
+        <div class="value-box">
+          <div class="value-label">EXPECTED</div>
+          <div class="value-data expected">${escapeHTML(check.key)} = ${escapeHTML(check.goodValue)}</div>
+        </div>
+        <div class="value-box">
+          <div class="value-label">DETECTED</div>
+          <div class="value-data ${foundClass}">${escapeHTML(foundText)}</div>
+        </div>
+      </div>
+      ${remediationHTML}
+    </div>
+  `;
+
+  const header  = row.querySelector(".check-header");
+  const detail  = row.querySelector(".check-detail");
+  const chevron = row.querySelector(".check-chevron");
+
+  header.addEventListener("click", () => {
+    const open = detail.style.display !== "none";
+    detail.style.display = open ? "none" : "block";
+    chevron.classList.toggle("open", !open);
+    header.setAttribute("aria-expanded", String(!open));
+  });
+
+  header.addEventListener("keydown", e => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); header.click(); }
+  });
+
+  return row;
+}
+
+// ── Render Checks List ────────────────────────────────────────
+function renderChecksList() {
+  checksList.innerHTML = "";
+  const filtered = currentResults.filter(r => {
+    if (currentFilter === "pass") return r.passed;
+    if (currentFilter === "fail") return !r.passed;
+    return true;
+  });
+
+  filtered.forEach((check, i) => {
+    checksList.appendChild(renderCheckRow(check, i));
+  });
+}
+
+// ── Show Results ──────────────────────────────────────────────
+function showResults(analysis) {
+  currentResults = analysis.results;
+
+  hide(uploadZone);
+  hide(hero);
+  show(resultsWrap);
+
+  // Score
+  renderScore(analysis.score);
+
+  // Detail line
+  const passCount = analysis.results.filter(r => r.passed).length;
+  const critFail  = analysis.results.filter(r => !r.passed && r.severity === "critical").length;
+  scoreDetail.innerHTML =
+    `${passCount} of ${analysis.results.length} checks passed · ` +
+    `<span class="critical-count">${critFail} critical issue${critFail !== 1 ? "s" : ""}</span>`;
+
+  renderCatPills(analysis.results);
+  renderChecksList();
+}
+
+// ── Handle File ───────────────────────────────────────────────
+function handleFile(file) {
+  if (!file) return;
+
+  hideError();
+  hide(uploadZone);
+  hide(hero);
+  hide(resultsWrap);
+  show(analyzingWrap);
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+
+    if (!text.trim().startsWith("Windows Registry Editor")) {
+      hide(analyzingWrap);
+      show(uploadZone);
+      show(hero);
+      showError("File does not appear to be a valid Windows Registry export (.reg file). Please export from regedit.exe and try again.");
+      return;
+    }
+
+    // Simulate scan delay for UX
+    setTimeout(() => {
+      try {
+        const analysis = analyzeRegistry(text);
+        hide(analyzingWrap);
+        showResults(analysis);
+      } catch (err) {
+        hide(analyzingWrap);
+        show(uploadZone);
+        show(hero);
+        showError("Failed to parse the registry file. Please ensure it is a valid .reg export.");
+      }
+    }, 1800);
+  };
+
+  reader.onerror = () => {
+    hide(analyzingWrap);
+    show(uploadZone);
+    show(hero);
+    showError("Could not read the file. Please try again.");
+  };
+
+  reader.readAsText(file);
+}
+
+// ── Drag & Drop ───────────────────────────────────────────────
+uploadZone.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  uploadZone.classList.add("dragging");
+});
+
+uploadZone.addEventListener("dragleave", () => {
+  uploadZone.classList.remove("dragging");
+});
+
+uploadZone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove("dragging");
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+
+uploadZone.addEventListener("click", () => fileInput.click());
+
+fileInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) handleFile(file);
+  fileInput.value = ""; // reset so same file can be re-selected
+});
+
+// ── Filter Buttons ────────────────────────────────────────────
+document.querySelectorAll(".filter-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentFilter = btn.dataset.filter;
+    renderChecksList();
+  });
+});
+
+// ── New Scan ──────────────────────────────────────────────────
+newScanBtn.addEventListener("click", () => {
+  hide(resultsWrap);
+  show(uploadZone);
+  show(hero);
+  currentResults = [];
+  currentFilter  = "all";
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+  document.querySelector('[data-filter="all"]').classList.add("active");
+  // Reset ring
+  scoreArc.style.strokeDasharray = `0 ${CIRC}`;
+  scoreNumber.textContent = "0";
+});
+
+// ── Helpers ───────────────────────────────────────────────────
+function show(el) { el.style.display = ""; }
+function hide(el) { el.style.display = "none"; }
+
+function showError(msg) {
+  errorBox.textContent = "⚠ " + msg;
+  show(errorBox);
+}
+
+function hideError() {
+  errorBox.textContent = "";
+  hide(errorBox);
+}
+
+function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+</script>
+</body>
+</html>
