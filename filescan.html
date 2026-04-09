@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>REGSEC — File & URL Threat Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="filescanstyle.css" />
+</head>
+<body>
+<div class="app-wrapper">
+
+  <!-- ══ NAVBAR ══ -->
+  <div class="navbar-outer">
+    <nav class="navbar">
+      <a class="nav-logo" href="#">
+        <div class="nav-logo-icon">⬡</div>
+        <span class="nav-logo-text">REGSEC</span>
+      </a>
+      <a class="nav-item active" href="regsec-scanner.html">Scan <span class="nav-arrow">▾</span></a>
+      <a class="nav-item" href="regsec-registry.html">Registry Audit</a>
+      <a class="nav-item" href="#">Reports <span class="nav-arrow">▾</span></a>
+      <a class="nav-item" href="#">Intelligence</a>
+      <div class="nav-lang">🌐 EN <span class="nav-arrow">▾</span></div>
+      <div class="nav-divider"></div>
+      <button class="nav-signin">Sign In</button>
+      <div class="nav-divider"></div>
+      <button class="nav-text-btn">HOME</button>
+      <button class="nav-text-btn">Dashboard</button>
+    </nav>
+  </div>
+
+  <main>
+
+    <!-- ══ HERO ══ -->
+    <div class="hero">
+      <div class="hero-eyebrow">⬡ Threat Intelligence Platform</div>
+      <h1>REGSEC</h1>
+      <p>Analyze files and URLs instantly against 30+ detection engines. Identify malware, phishing, and suspicious behavior — all in your browser.</p>
+    </div>
+
+    <!-- ══ STATS ══ -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num" id="statScans">0</div>
+        <div class="stat-label">SCANS TODAY</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">30+</div>
+        <div class="stat-label">DETECTION ENGINES</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="statThreats">0</div>
+        <div class="stat-label">THREATS BLOCKED</div>
+      </div>
+    </div>
+
+    <!-- ══ ERROR ══ -->
+    <div class="error-box" id="errorBox" style="display:none"></div>
+
+    <!-- ══ SCAN UI ══ -->
+    <div id="scanUI">
+
+      <!-- Tabs -->
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="file" onclick="switchTab('file')">
+          <span class="tab-icon">📁</span> File
+        </button>
+        <button class="tab-btn" data-tab="url" onclick="switchTab('url')">
+          <span class="tab-icon">🔗</span> URL / Domain
+        </button>
+      </div>
+
+      <!-- File panel -->
+      <div class="scan-panel active" id="panel-file">
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="fileInput" style="display:none" />
+          <div class="drop-icon-wrap">📁</div>
+          <div class="drop-title">Drop file here to scan</div>
+          <div class="drop-sub">or click to choose a file from your device</div>
+          <div class="drop-types">
+            <span class="drop-type-tag">.exe</span>
+            <span class="drop-type-tag">.dll</span>
+            <span class="drop-type-tag">.pdf</span>
+            <span class="drop-type-tag">.docx</span>
+            <span class="drop-type-tag">.zip</span>
+            <span class="drop-type-tag">.js</span>
+            <span class="drop-type-tag">.py</span>
+            <span class="drop-type-tag">+ any file</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- URL panel -->
+      <div class="scan-panel" id="panel-url">
+        <div class="url-panel-inner">
+          <div class="url-label">Scan a URL or Domain</div>
+          <div class="url-sub">Paste any URL, IP address, or domain to check it against threat databases.</div>
+          <div class="url-input-row">
+            <input
+              class="url-input" id="urlInput" type="text"
+              placeholder="https://example.com or 192.168.1.1"
+              spellcheck="false" autocomplete="off"
+            />
+            <button class="url-scan-btn" id="urlScanBtn" onclick="startUrlScan()">Scan →</button>
+          </div>
+          <div class="url-examples">
+            <span style="color:var(--text-muted)">Try:</span>
+            <span class="url-example-chip" onclick="fillUrl('https://google.com')">google.com</span>
+            <span class="url-example-chip" onclick="fillUrl('http://malware-test.example.bad')">suspicious-url</span>
+            <span class="url-example-chip" onclick="fillUrl('https://github.com')">github.com</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /scanUI -->
+
+    <!-- ══ SCANNING STATE ══ -->
+    <div id="scanningWrap" style="display:none">
+      <div class="scanning-wrap">
+        <div style="position:relative;width:90px;height:90px;margin:0 auto 28px;">
+          <div class="scan-spinner" style="position:absolute;inset:0;width:90px;height:90px;margin:0;"></div>
+          <div class="scanning-icon-wrap" id="scanningIcon">📁</div>
+        </div>
+        <div class="scanning-label">Scanning</div>
+        <div class="scanning-sub" id="scanningSubtext">Querying 30 detection engines...</div>
+        <div class="scanning-filename" id="scanningFilename">—</div>
+        <div class="engine-list" id="engineProgressList"></div>
+      </div>
+    </div>
+
+    <!-- ══ RESULTS ══ -->
+    <div id="resultWrap" style="display:none">
+      <div class="result-wrap">
+        <div class="new-scan-row">
+          <button class="new-scan-btn" onclick="resetToScan()">↩ New Scan</button>
+        </div>
+
+        <div class="verdict-banner" id="verdictBanner">
+          <div class="verdict-icon" id="verdictIcon"></div>
+          <div class="verdict-info">
+            <div class="verdict-title" id="verdictTitle"></div>
+            <div class="verdict-sub" id="verdictSub"></div>
+          </div>
+          <div class="verdict-score-wrap">
+            <div class="verdict-score-num" id="verdictScore"></div>
+            <div class="verdict-score-label">DETECTIONS</div>
+          </div>
+        </div>
+
+        <div class="threat-detail-box" id="threatBox" style="display:none">
+          <div class="threat-detail-title">⚠ Detected Threats</div>
+          <div class="threat-tag-list" id="threatTagList"></div>
+        </div>
+
+        <div class="meta-grid" id="metaGrid"></div>
+
+        <div class="engines-section-title">Detection Engines</div>
+        <div class="engines-grid" id="enginesGrid"></div>
+
+        <div class="action-bar">
+          <button class="action-btn primary" onclick="resetToScan()">⬡ Scan Another</button>
+          <button class="action-btn" onclick="copyReport()">📋 Copy Report</button>
+          <button class="action-btn" onclick="downloadReport()">⬇ Download Report</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ RECENT SCANS ══ -->
+    <div class="recent-wrap" id="recentWrap">
+      <div class="section-title">Recent Scans</div>
+      <div class="recent-list" id="recentList"></div>
+    </div>
+
+    <div class="footer-note">
+      ⚠ REGSEC performs heuristic and simulated engine analysis locally.<br>
+      No file data is sent to any external server. For production use, connect a real threat intelligence API.
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  REGSEC — File & URL Scanner  |  All JavaScript
+// ══════════════════════════════════════════════
+
+// ── Detection Engines ─────────────────────────
+const ENGINES = [
+  "ClamAV","Kaspersky","Bitdefender","Norton","ESET","Malwarebytes",
+  "Avast","AVG","McAfee","Trend Micro","Sophos","F-Secure",
+  "Comodo","DrWeb","Emsisoft","G Data","Ikarus","K7","Panda",
+  "Symantec","TotalAV","Vipre","Webroot","ZoneAlarm","Cylance",
+  "CrowdStrike","SentinelOne","Carbon Black","Fortinet","Zscaler"
+];
+
+const THREAT_LABELS = [
+  "Trojan.GenericKD","Ransomware.WannaCry","Adware.BrowseFox",
+  "PUA.BundleInstaller","Exploit.CVE-2021-34527","Backdoor.Agent",
+  "Spyware.KeyLogger","Worm.AutoRun","Dropper.Generic","Phishing.HTML",
+  "Malware.Obfuscated","Trojan.Downloader","PUP.Optional","Rootkit.Generic"
+];
+
+const URL_THREATS = [
+  "Phishing","Malware Distribution","Command & Control","Drive-by Download",
+  "Credential Harvesting","Spam","Botnet","Cryptomining"
+];
+
+// ── State ─────────────────────────────────────
+let recentScans    = [];
+let lastReport     = null;
+let currentTab     = "file";
+let scanIntervalId = null;
+let engineProgressIdx = 0;
+
+// ── DOM ───────────────────────────────────────
+const dropZone           = document.getElementById("dropZone");
+const fileInput          = document.getElementById("fileInput");
+const urlInput           = document.getElementById("urlInput");
+const scanUI             = document.getElementById("scanUI");
+const scanningWrap       = document.getElementById("scanningWrap");
+const resultWrap         = document.getElementById("resultWrap");
+const errorBox           = document.getElementById("errorBox");
+const recentWrap         = document.getElementById("recentWrap");
+const recentList         = document.getElementById("recentList");
+const engineProgressList = document.getElementById("engineProgressList");
+
+// ── Tab switching ─────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  document.querySelectorAll(".scan-panel").forEach(p => p.classList.toggle("active", p.id === `panel-${tab}`));
+}
+
+// ── URL helpers ───────────────────────────────
+function fillUrl(url) { urlInput.value = url; urlInput.focus(); }
+urlInput.addEventListener("keydown", e => { if (e.key === "Enter") startUrlScan(); });
+
+// ── Drag & drop ───────────────────────────────
+dropZone.addEventListener("dragover",  e => { e.preventDefault(); dropZone.classList.add("dragging"); });
+dropZone.addEventListener("dragleave", ()  => dropZone.classList.remove("dragging"));
+dropZone.addEventListener("drop", e => {
+  e.preventDefault();
+  dropZone.classList.remove("dragging");
+  if (e.dataTransfer.files[0]) startFileScan(e.dataTransfer.files[0]);
+});
+dropZone.addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", e => {
+  if (e.target.files[0]) startFileScan(e.target.files[0]);
+  fileInput.value = "";
+});
+
+// ── Animated stat counters ────────────────────
+function animateStat(el, target) {
+  let v = 0;
+  const step = Math.ceil(target / 60);
+  const t = setInterval(() => {
+    v = Math.min(v + step, target);
+    el.textContent = v.toLocaleString();
+    if (v >= target) clearInterval(t);
+  }, 20);
+}
+
+window.addEventListener("load", () => {
+  animateStat(document.getElementById("statScans"),   48291);
+  animateStat(document.getElementById("statThreats"),  1847);
+  renderRecentList();
+});
+
+// ── Deterministic hash (consistent results per filename) ──
+function fakeHash(str, len) {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
+  let hex = Math.abs(h).toString(16).padStart(8, "0");
+  while (hex.length < len) hex += Math.abs(h * hex.length).toString(16).padStart(8, "0");
+  return hex.slice(0, len);
+}
+
+// ── Verdict from detection count ──────────────
+function getVerdict(n) {
+  if (n === 0) return "clean";
+  if (n <= 3)  return "suspicious";
+  return "malicious";
+}
+
+// ── Simulate scan (deterministic per name) ────
+function simulateScan(name) {
+  const seed    = fakeHash(name, 8);
+  const seedNum = parseInt(seed, 16);
+  const roll    = seedNum % 100;
+
+  let detectionCount;
+  if (roll < 60)      detectionCount = 0;
+  else if (roll < 80) detectionCount = (seedNum % 3) + 1;
+  else                detectionCount = (seedNum % 8) + 4;
+
+  const verdict = getVerdict(detectionCount);
+
+  const engines = ENGINES.map((eng, i) => {
+    const es = parseInt(fakeHash(name + eng, 6), 16);
+    let status, label;
+    if (i < detectionCount) {
+      status = "bad"; label = THREAT_LABELS[es % THREAT_LABELS.length];
+    } else if (es % 30 === 0) {
+      status = "warn"; label = "Suspicious";
+    } else {
+      status = es % 10 === 0 ? "skip" : "ok";
+      label  = status === "skip" ? "N/A" : "Clean";
+    }
+    return { name: eng, status, label };
+  });
+
+  engines.sort((a, b) => ({ bad:0, warn:1, ok:2, skip:3 }[a.status] - { bad:0, warn:1, ok:2, skip:3 }[b.status]));
+
+  const threats = [];
+  if (verdict !== "clean") {
+    const unique = [...new Set(engines.filter(e => e.status === "bad").map(e => e.label))].slice(0, 4);
+    threats.push(...unique);
+  }
+
+  return { verdict, detectionCount, engines, threats, seed };
+}
+
+// ── Start File Scan ───────────────────────────
+function startFileScan(file) {
+  hideError();
+  hide(scanUI); hide(resultWrap); hide(recentWrap);
+  show(scanningWrap);
+
+  document.getElementById("scanningIcon").textContent    = getFileIcon(file.name);
+  document.getElementById("scanningSubtext").textContent = "Querying 30 detection engines...";
+  document.getElementById("scanningFilename").textContent = file.name;
+
+  buildEngineProgress();
+
+  setTimeout(() => {
+    const result  = simulateScan(file.name);
+    const sizeStr = file.size > 1048576
+      ? `${(file.size/1048576).toFixed(2)} MB`
+      : `${(file.size/1024).toFixed(1)} KB`;
+    const ext     = file.name.split(".").pop().toUpperCase() || "FILE";
+    const meta = [
+      { label: "File Name",     value: file.name },
+      { label: "File Type",     value: ext },
+      { label: "File Size",     value: sizeStr },
+      { label: "SHA-256",       value: fakeHash(file.name + file.size, 32) + "..." },
+      { label: "MD5",           value: fakeHash(file.name, 32) },
+      { label: "Last Modified", value: new Date(file.lastModified).toLocaleString() },
+    ];
+    lastReport = { type: "file", name: file.name, result, meta };
+    addRecentScan("file", file.name, result.verdict);
+    hide(scanningWrap);
+    clearInterval(scanIntervalId);
+    showResult(result, meta);
+  }, 3400);
+}
+
+// ── Start URL Scan ────────────────────────────
+function startUrlScan() {
+  const raw = urlInput.value.trim();
+  if (!raw) { showError("Please enter a URL or domain to scan."); return; }
+
+  let url = raw;
+  if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+
+  hideError();
+  hide(scanUI); hide(resultWrap); hide(recentWrap);
+  show(scanningWrap);
+
+  document.getElementById("scanningIcon").textContent    = "🔗";
+  document.getElementById("scanningSubtext").textContent = "Checking URL against threat intelligence...";
+  document.getElementById("scanningFilename").textContent = url;
+
+  buildEngineProgress();
+
+  setTimeout(() => {
+    const result = simulateScan(url);
+    let hostname;
+    try { hostname = new URL(url).hostname; } catch { hostname = url; }
+
+    const h = (s) => parseInt(fakeHash(url + s, 2), 16);
+    const meta = [
+      { label: "URL",        value: url.length > 60 ? url.slice(0, 60) + "…" : url },
+      { label: "Domain",     value: hostname },
+      { label: "Protocol",   value: url.split("://")[0].toUpperCase() },
+      { label: "IP (sim.)",  value: `${h("a")%220+10}.${h("b")%254}.${h("c")%254}.${h("d")%254}` },
+      { label: "ASN (sim.)", value: "AS" + (parseInt(fakeHash(url, 4), 16) % 65000 + 1000) },
+      { label: "Scanned",    value: new Date().toLocaleString() },
+    ];
+    lastReport = { type: "url", name: url, result, meta };
+    addRecentScan("url", url, result.verdict);
+    hide(scanningWrap);
+    clearInterval(scanIntervalId);
+    showResult(result, meta);
+  }, 2800);
+}
+
+// ── Engine progress animation ─────────────────
+function buildEngineProgress() {
+  engineProgressList.innerHTML = "";
+  engineProgressIdx = 0;
+  const sample = ENGINES.slice(0, 7);
+
+  sample.forEach((eng, i) => {
+    const row = document.createElement("div");
+    row.className = "engine-row";
+    row.style.animationDelay = `${i * 0.12}s`;
+    row.innerHTML = `
+      <div class="engine-name">${eng}</div>
+      <div class="engine-bar-track">
+        <div class="engine-bar-fill" id="ebar-${i}"></div>
+      </div>
+      <div class="engine-status" id="estatus-${i}" style="color:var(--text-muted)">...</div>
+    `;
+    engineProgressList.appendChild(row);
+  });
+
+  clearInterval(scanIntervalId);
+  scanIntervalId = setInterval(() => {
+    if (engineProgressIdx >= sample.length) { clearInterval(scanIntervalId); return; }
+    const bar    = document.getElementById(`ebar-${engineProgressIdx}`);
+    const status = document.getElementById(`estatus-${engineProgressIdx}`);
+    if (bar)    bar.style.width = "100%";
+    if (status) { status.textContent = "Done"; status.style.color = "var(--green)"; }
+    engineProgressIdx++;
+  }, 380);
+}
+
+// ── Render result ─────────────────────────────
+function showResult(result, meta) {
+  const { verdict, detectionCount, engines, threats } = result;
+
+  const banner = document.getElementById("verdictBanner");
+  banner.className = `verdict-banner ${verdict}`;
+
+  const icons  = { clean:"✅", suspicious:"⚠️", malicious:"🦠" };
+  const titles = { clean:"No Threats Detected", suspicious:"Suspicious", malicious:"Malicious" };
+  const activeEngines = engines.filter(e => e.status !== "skip").length;
+  const subs = {
+    clean:      `All ${activeEngines} engines returned clean results. This file appears safe.`,
+    suspicious: `${detectionCount} engine${detectionCount!==1?"s":""} flagged this as potentially unwanted. Exercise caution.`,
+    malicious:  `${detectionCount} engine${detectionCount!==1?"s":""} detected malware. Do not open or execute this file/URL.`,
+  };
+
+  document.getElementById("verdictIcon").textContent  = icons[verdict];
+  document.getElementById("verdictTitle").textContent = titles[verdict];
+  document.getElementById("verdictSub").textContent   = subs[verdict];
+  document.getElementById("verdictScore").textContent = `${detectionCount}/${activeEngines}`;
+
+  const threatBox = document.getElementById("threatBox");
+  if (threats.length > 0) {
+    const tagList = document.getElementById("threatTagList");
+    tagList.innerHTML = "";
+    threats.forEach(t => {
+      const tag = document.createElement("span");
+      tag.className = `threat-tag${verdict === "suspicious" ? " yellow" : ""}`;
+      tag.textContent = t;
+      tagList.appendChild(tag);
+    });
+    show(threatBox);
+  } else {
+    hide(threatBox);
+  }
+
+  const metaGrid = document.getElementById("metaGrid");
+  metaGrid.innerHTML = "";
+  meta.forEach(m => {
+    const box = document.createElement("div");
+    box.className = "meta-box";
+    box.innerHTML = `<div class="meta-label">${escHTML(m.label)}</div><div class="meta-value">${escHTML(m.value)}</div>`;
+    metaGrid.appendChild(box);
+  });
+
+  const egrid = document.getElementById("enginesGrid");
+  egrid.innerHTML = "";
+  engines.forEach((eng, i) => {
+    const card = document.createElement("div");
+    card.className = "engine-card";
+    card.style.animationDelay = `${i * 0.025}s`;
+    card.innerHTML = `
+      <div class="engine-card-dot ${eng.status}"></div>
+      <div class="engine-card-name">${escHTML(eng.name)}</div>
+      <div class="engine-card-result ${eng.status}">${escHTML(eng.label)}</div>
+    `;
+    egrid.appendChild(card);
+  });
+
+  show(resultWrap);
+  show(recentWrap);
+  renderRecentList();
+}
+
+// ── Recent scans ──────────────────────────────
+function addRecentScan(type, name, verdict) {
+  recentScans.unshift({ type, name, verdict, time: new Date() });
+  if (recentScans.length > 6) recentScans.pop();
+}
+
+function renderRecentList() {
+  recentList.innerHTML = "";
+  if (recentScans.length === 0) {
+    recentList.innerHTML = `<div style="font-size:13px;color:var(--text-muted);text-align:center;padding:20px 0;">No recent scans — drop a file or enter a URL above.</div>`;
+    return;
+  }
+  recentScans.forEach(scan => {
+    const card = document.createElement("div");
+    card.className = "recent-card";
+    card.innerHTML = `
+      <div class="recent-type-icon ${scan.type}">${scan.type === "file" ? "📁" : "🔗"}</div>
+      <div class="recent-info">
+        <div class="recent-name">${escHTML(scan.name)}</div>
+        <div class="recent-time">${formatTimeAgo(scan.time)}</div>
+      </div>
+      <div class="recent-verdict ${scan.verdict}">${scan.verdict.toUpperCase()}</div>
+    `;
+    recentList.appendChild(card);
+  });
+}
+
+function formatTimeAgo(date) {
+  const s = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (s < 5)  return "just now";
+  if (s < 60) return `${s}s ago`;
+  return `${Math.floor(s / 60)}m ago`;
+}
+
+// ── Reset ─────────────────────────────────────
+function resetToScan() {
+  hide(resultWrap); hide(scanningWrap);
+  show(scanUI); show(recentWrap);
+  renderRecentList();
+  clearInterval(scanIntervalId);
+  urlInput.value = "";
+}
+
+// ── Copy / Download report ────────────────────
+function reportLines() {
+  if (!lastReport) return [];
+  const r = lastReport.result;
+  return [
+    `REGSEC THREAT REPORT`,
+    `====================`,
+    `Target:     ${lastReport.name}`,
+    `Type:       ${lastReport.type.toUpperCase()}`,
+    `Verdict:    ${r.verdict.toUpperCase()}`,
+    `Detections: ${r.detectionCount}/${r.engines.filter(e=>e.status!=="skip").length}`,
+    ``,
+    `ENGINE RESULTS:`,
+    ...r.engines.map(e => `  ${e.name.padEnd(16)} ${e.label}`),
+    ``,
+    `Scanned: ${new Date().toLocaleString()}`,
+    `Generated by REGSEC — https://regsec.io`
+  ];
+}
+
+function copyReport() {
+  navigator.clipboard.writeText(reportLines().join("\n"))
+    .then(()  => alert("Report copied to clipboard!"))
+    .catch(()  => alert("Copy not supported in this browser."));
+}
+
+function downloadReport() {
+  const blob = new Blob([reportLines().join("\n")], { type: "text/plain" });
+  const a    = document.createElement("a");
+  a.href     = URL.createObjectURL(blob);
+  a.download = "regsec-report.txt";
+  a.click();
+}
+
+// ── Helpers ───────────────────────────────────
+function show(el) { el.style.display = ""; }
+function hide(el) { el.style.display = "none"; }
+
+function showError(msg) { errorBox.textContent = "⚠ " + msg; show(errorBox); }
+function hideError()    { hide(errorBox); errorBox.textContent = ""; }
+
+function escHTML(str) {
+  return String(str)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function getFileIcon(name) {
+  const ext = name.split(".").pop().toLowerCase();
+  return { exe:"⚙️",dll:"🔧",pdf:"📄",docx:"📝",doc:"📝",
+           zip:"📦",rar:"📦",js:"📜",py:"🐍",sh:"💻",
+           bat:"💻",ps1:"💻",jpg:"🖼",png:"🖼",mp4:"🎬" }[ext] || "📁";
+}
+</script>
+</body>
+</html>
