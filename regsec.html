@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>REGSEC — Advanced PC Security Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+
+    /* ══════════════════════════════════════════════
+       CSS VARIABLES — identical to scanner theme
+    ══════════════════════════════════════════════ */
+    :root {
+      --bg-deep:       #080a13;
+      --bg-card:       rgba(255,255,255,0.035);
+      --border:        rgba(255,255,255,0.08);
+      --border-purple: rgba(124,90,255,0.3);
+      --purple:        #7c5aff;
+      --purple-light:  #9b7fff;
+      --purple-dim:    rgba(124,90,255,0.15);
+      --indigo:        #6366f1;
+      --violet:        #a78bfa;
+      --red:           #f43f5e;
+      --orange:        #fb923c;
+      --yellow:        #fbbf24;
+      --green:         #34d399;
+      --text-primary:  rgba(255,255,255,0.92);
+      --text-secondary:rgba(255,255,255,0.5);
+      --text-muted:    rgba(255,255,255,0.25);
+      --text-heading:  rgba(180,170,255,0.55);
+      --font-display:  'Rajdhani', sans-serif;
+      --font-body:     'Inter', sans-serif;
+      --radius-sm:     6px;
+      --radius-md:     10px;
+      --radius-lg:     16px;
+      --radius-xl:     20px;
+      --radius-pill:   999px;
+    }
+
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Dot-grid */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: radial-gradient(rgba(124,90,255,0.065) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg-deep); }
+    ::-webkit-scrollbar-thumb { background: rgba(124,90,255,0.35); border-radius: 3px; }
+
+    /* ── Keyframes ── */
+    @keyframes fadeSlideIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+    @keyframes fadeIn      { from{opacity:0} to{opacity:1} }
+    @keyframes floatUp     { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    @keyframes spin        { to{transform:rotate(360deg)} }
+    @keyframes pulse       { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    @keyframes shimmer     { 0%{background-position:-200% center} 100%{background-position:200% center} }
+    @keyframes rotateSlow  { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    @keyframes scanBeam    { 0%{transform:translateY(-100%);opacity:0} 10%{opacity:1} 90%{opacity:1} 100%{transform:translateY(600%);opacity:0} }
+    @keyframes countUp     { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+    @keyframes borderGlow  { 0%,100%{border-color:rgba(124,90,255,0.2)} 50%{border-color:rgba(124,90,255,0.6)} }
+    @keyframes blink       { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ── Page wrapper ── */
+    .page { position: relative; z-index: 1; }
+
+    /* ══════════════════════════════════════════════
+       NAVBAR
+    ══════════════════════════════════════════════ */
+    .navbar-outer {
+      padding: 18px 24px;
+      display: flex; justify-content: center;
+      position: sticky; top: 0; z-index: 100;
+    }
+
+    .navbar {
+      display: flex; align-items: center; gap: 2px;
+      background: rgba(255,255,255,0.065);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius-pill);
+      padding: 7px 10px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.04);
+      max-width: 960px; width: 100%;
+    }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: 9px;
+      padding: 4px 12px 4px 6px; text-decoration: none; margin-right: 6px;
+    }
+
+    .nav-logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, #7c5aff, #a78bfa);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; box-shadow: 0 0 14px rgba(124,90,255,0.5);
+    }
+
+    .nav-logo-text {
+      font-family: var(--font-display); font-size: 16px; font-weight: 700;
+      letter-spacing: 2px; color: var(--text-primary);
+    }
+
+    .nav-item {
+      font-family: var(--font-body); font-size: 13.5px; font-weight: 500;
+      color: var(--text-secondary); padding: 7px 15px; border-radius: var(--radius-pill);
+      cursor: pointer; border: none; background: transparent;
+      transition: color 0.2s, background 0.2s; text-decoration: none;
+      white-space: nowrap; display: flex; align-items: center; gap: 4px;
+    }
+
+    .nav-item:hover  { color: var(--text-primary); background: rgba(255,255,255,0.07); }
+    .nav-item.active { color: var(--text-primary); background: rgba(255,255,255,0.08); }
+    .nav-arrow { font-size: 9px; opacity: 0.55; }
+
+    .nav-lang {
+      display: flex; align-items: center; gap: 5px;
+      font-family: var(--font-body); font-size: 12.5px; font-weight: 500;
+      color: var(--text-secondary); padding: 7px 13px; border-radius: var(--radius-pill);
+      cursor: pointer; border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04); transition: all 0.2s; white-space: nowrap;
+    }
+    .nav-lang:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+
+    .nav-divider { width: 1px; height: 20px; background: rgba(255,255,255,0.09); margin: 0 4px; flex-shrink: 0; }
+
+    .nav-signin {
+      font-family: var(--font-body); font-size: 13.5px; font-weight: 600;
+      color: #fff; padding: 8px 22px; border-radius: var(--radius-pill);
+      cursor: pointer; border: none;
+      background: linear-gradient(135deg, #7c5aff 0%, #6366f1 100%);
+      box-shadow: 0 4px 16px rgba(124,90,255,0.45);
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .nav-signin:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(124,90,255,0.6); }
+
+    .nav-text-btn {
+      font-family: var(--font-body); font-size: 13.5px; font-weight: 500;
+      color: var(--text-secondary); padding: 7px 15px; border-radius: var(--radius-pill);
+      cursor: pointer; border: none; background: transparent;
+      transition: color 0.2s, background 0.2s; white-space: nowrap;
+    }
+    .nav-text-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.07); }
+
+    /* ══════════════════════════════════════════════
+       HERO SECTION
+    ══════════════════════════════════════════════ */
+    .hero-section {
+      min-height: 92vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 60px 24px 80px;
+      position: relative; overflow: hidden;
+    }
+
+    /* Big ambient purple glow behind hero */
+    .hero-glow {
+      position: absolute;
+      top: -10%; left: 50%; transform: translateX(-50%);
+      width: 1000px; height: 700px; pointer-events: none;
+      background: radial-gradient(ellipse at center,
+        rgba(124,90,255,0.12) 0%,
+        rgba(99,102,241,0.06) 40%,
+        transparent 70%);
+    }
+
+    /* Rotating ring decoration */
+    .hero-ring {
+      position: absolute;
+      width: 700px; height: 700px;
+      border: 1px solid rgba(124,90,255,0.08);
+      border-radius: 50%;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation: rotateSlow 60s linear infinite;
+      pointer-events: none;
+    }
+
+    .hero-ring::before {
+      content: '';
+      position: absolute; top: -3px; left: 48%;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--purple);
+      box-shadow: 0 0 12px var(--purple);
+    }
+
+    .hero-ring-2 {
+      position: absolute;
+      width: 500px; height: 500px;
+      border: 1px solid rgba(124,90,255,0.05);
+      border-radius: 50%;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation: rotateSlow 40s linear infinite reverse;
+      pointer-events: none;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-body); font-size: 11px; font-weight: 600;
+      letter-spacing: 3px; color: var(--purple-light);
+      background: var(--purple-dim); border: 1px solid var(--border-purple);
+      padding: 6px 18px; border-radius: var(--radius-pill);
+      margin-bottom: 28px; text-transform: uppercase;
+      animation: fadeSlideIn 0.6s ease both;
+    }
+
+    .live-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green); box-shadow: 0 0 8px rgba(52,211,153,0.7);
+      animation: pulse 1.5s ease infinite;
+      flex-shrink: 0;
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(56px, 10vw, 110px); font-weight: 300;
+      letter-spacing: 18px; line-height: 1.0;
+      color: var(--text-heading); text-transform: uppercase;
+      margin-bottom: 8px;
+      animation: fadeSlideIn 0.7s ease 0.1s both;
+      position: relative;
+    }
+
+    /* Shimmer on the title */
+    .hero-title-shimmer {
+      background: linear-gradient(
+        90deg,
+        rgba(180,170,255,0.55) 0%,
+        rgba(167,139,250,0.9) 30%,
+        rgba(124,90,255,0.95) 50%,
+        rgba(167,139,250,0.9) 70%,
+        rgba(180,170,255,0.55) 100%
+      );
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 4s linear infinite;
+    }
+
+    .hero-sub-title {
+      font-family: var(--font-display);
+      font-size: clamp(13px, 2vw, 18px); font-weight: 300;
+      letter-spacing: 8px; color: rgba(124,90,255,0.55);
+      text-transform: uppercase; margin-bottom: 32px;
+      animation: fadeSlideIn 0.7s ease 0.2s both;
+    }
+
+    .hero-desc {
+      font-size: 15px; font-weight: 300; color: var(--text-secondary);
+      max-width: 580px; margin: 0 auto 44px; line-height: 1.9;
+      animation: fadeSlideIn 0.7s ease 0.3s both;
+    }
+
+    .hero-cta-group {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+      animation: fadeSlideIn 0.7s ease 0.4s both;
+      margin-bottom: 64px;
+    }
+
+    .btn-primary {
+      font-family: var(--font-body); font-size: 14px; font-weight: 600;
+      color: #fff; padding: 14px 32px; border-radius: var(--radius-pill);
+      cursor: pointer; border: none;
+      background: linear-gradient(135deg, #7c5aff 0%, #6366f1 100%);
+      box-shadow: 0 4px 20px rgba(124,90,255,0.5);
+      transition: all 0.22s; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(124,90,255,0.65); }
+
+    .btn-secondary {
+      font-family: var(--font-body); font-size: 14px; font-weight: 500;
+      color: var(--text-secondary); padding: 14px 32px; border-radius: var(--radius-pill);
+      cursor: pointer; border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04); transition: all 0.22s;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.08); color: var(--text-primary);
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    /* ── Hero terminal mock ── */
+    .hero-terminal {
+      width: 100%; max-width: 680px; margin: 0 auto;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      animation: fadeSlideIn 0.8s ease 0.5s both;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(124,90,255,0.1);
+    }
+
+    .terminal-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 18px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .terminal-dot.red    { background: #ff5f57; }
+    .terminal-dot.yellow { background: #ffbd2e; }
+    .terminal-dot.green  { background: #28ca42; }
+
+    .terminal-title {
+      font-size: 11px; color: var(--text-muted); margin-left: 8px;
+      letter-spacing: 1px; font-family: 'Courier New', monospace;
+    }
+
+    .terminal-body {
+      padding: 22px 24px;
+      font-family: 'Courier New', monospace;
+      font-size: 12.5px; line-height: 1.9;
+    }
+
+    .t-line { display: flex; align-items: flex-start; gap: 10px; }
+    .t-prompt { color: var(--purple); flex-shrink: 0; }
+    .t-cmd    { color: rgba(255,255,255,0.75); }
+    .t-out    { color: var(--text-muted); padding-left: 18px; display: block; }
+
+    .t-ok   { color: var(--green); }
+    .t-warn { color: var(--yellow); }
+    .t-bad  { color: var(--red); }
+    .t-info { color: var(--purple-light); }
+
+    .cursor {
+      display: inline-block; width: 8px; height: 14px;
+      background: var(--purple); margin-left: 2px;
+      animation: blink 1s step-end infinite; vertical-align: text-bottom;
+    }
+
+    /* ══════════════════════════════════════════════
+       LIVE STATS TICKER
+    ══════════════════════════════════════════════ */
+    .stats-ticker {
+      background: rgba(124,90,255,0.05);
+      border-top: 1px solid rgba(124,90,255,0.12);
+      border-bottom: 1px solid rgba(124,90,255,0.12);
+      padding: 18px 0; overflow: hidden;
+    }
+
+    .ticker-inner {
+      display: flex; gap: 0;
+      justify-content: center; flex-wrap: wrap;
+    }
+
+    .ticker-stat {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 40px;
+      border-right: 1px solid rgba(255,255,255,0.06);
+    }
+    .ticker-stat:last-child { border-right: none; }
+
+    .ticker-num {
+      font-family: var(--font-display); font-size: 26px; font-weight: 700;
+      color: var(--purple-light);
+    }
+
+    .ticker-label { font-size: 11px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; }
+
+    /* ══════════════════════════════════════════════
+       SECTION SCAFFOLDING
+    ══════════════════════════════════════════════ */
+    section { padding: 100px 24px; }
+
+    .section-inner { max-width: 1060px; margin: 0 auto; }
+
+    .section-eyebrow {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-body); font-size: 10px; font-weight: 600;
+      letter-spacing: 3px; color: var(--purple-light);
+      background: var(--purple-dim); border: 1px solid var(--border-purple);
+      padding: 5px 14px; border-radius: var(--radius-pill);
+      margin-bottom: 18px; text-transform: uppercase;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 4vw, 46px); font-weight: 600;
+      letter-spacing: 3px; text-transform: uppercase;
+      color: var(--text-heading); margin-bottom: 16px; line-height: 1.1;
+    }
+
+    .section-desc {
+      font-size: 14px; font-weight: 300; color: var(--text-secondary);
+      max-width: 560px; line-height: 1.9;
+    }
+
+    .section-header { margin-bottom: 56px; }
+
+    /* Divider line */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(124,90,255,0.2), transparent);
+      margin: 0 24px;
+    }
+
+    /* ══════════════════════════════════════════════
+       FEATURES GRID
+    ══════════════════════════════════════════════ */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 28px 28px 24px;
+      transition: border-color 0.25s, background 0.25s, transform 0.25s;
+      position: relative; overflow: hidden;
+      cursor: default;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at top left, rgba(124,90,255,0.08) 0%, transparent 60%);
+      opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(124,90,255,0.35);
+      background: rgba(255,255,255,0.05);
+      transform: translateY(-3px);
+    }
+    .feature-card:hover::before { opacity: 1; }
+
+    /* Accent top border on hover */
+    .feature-card::after {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--purple), var(--violet));
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .feature-card:hover::after { opacity: 1; }
+
+    .feature-icon-wrap {
+      width: 52px; height: 52px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; margin-bottom: 20px;
+      border: 1px solid;
+    }
+
+    .feature-icon-wrap.purple {
+      background: rgba(124,90,255,0.12); border-color: rgba(124,90,255,0.25);
+    }
+    .feature-icon-wrap.green  {
+      background: rgba(52,211,153,0.1);  border-color: rgba(52,211,153,0.25);
+    }
+    .feature-icon-wrap.red    {
+      background: rgba(244,63,94,0.1);   border-color: rgba(244,63,94,0.25);
+    }
+    .feature-icon-wrap.yellow {
+      background: rgba(251,191,36,0.1);  border-color: rgba(251,191,36,0.25);
+    }
+    .feature-icon-wrap.indigo {
+      background: rgba(99,102,241,0.12); border-color: rgba(99,102,241,0.25);
+    }
+    .feature-icon-wrap.orange {
+      background: rgba(251,146,60,0.1);  border-color: rgba(251,146,60,0.25);
+    }
+
+    .feature-title {
+      font-family: var(--font-display); font-size: 18px; font-weight: 600;
+      color: var(--text-primary); margin-bottom: 10px; letter-spacing: 0.5px;
+    }
+
+    .feature-desc {
+      font-size: 13px; font-weight: 300; color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    .feature-tag {
+      display: inline-block; margin-top: 16px;
+      font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
+      padding: 3px 10px; border-radius: var(--radius-pill);
+      text-transform: uppercase;
+    }
+
+    .feature-tag.free { background: rgba(52,211,153,0.1); color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
+    .feature-tag.pro  { background: var(--purple-dim);    color: var(--violet); border: 1px solid rgba(124,90,255,0.25); }
+
+    /* ══════════════════════════════════════════════
+       HOW IT WORKS
+    ══════════════════════════════════════════════ */
+    .how-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0; position: relative;
+    }
+
+    .how-grid::before {
+      content: '';
+      position: absolute; top: 40px; left: 40px; right: 40px; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(124,90,255,0.3), transparent);
+      pointer-events: none;
+    }
+
+    .how-step {
+      padding: 0 28px 0 0; text-align: left;
+      position: relative;
+    }
+
+    .how-step-num {
+      width: 80px; height: 80px;
+      border: 1px solid rgba(124,90,255,0.25);
+      border-radius: 50%; margin-bottom: 24px;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; background: var(--bg-deep);
+    }
+
+    .how-step-num-text {
+      font-family: var(--font-display); font-size: 28px; font-weight: 700;
+      color: var(--purple-light);
+    }
+
+    .how-step-num::after {
+      content: '';
+      position: absolute; inset: -4px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(124,90,255,0.15), transparent 70%);
+    }
+
+    .how-step-icon {
+      position: absolute; bottom: -6px; right: -6px;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--purple), var(--indigo));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; box-shadow: 0 0 12px rgba(124,90,255,0.5);
+    }
+
+    .how-title {
+      font-family: var(--font-display); font-size: 17px; font-weight: 600;
+      color: var(--text-primary); margin-bottom: 8px; letter-spacing: 0.5px;
+    }
+
+    .how-desc {
+      font-size: 13px; font-weight: 300; color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    /* ══════════════════════════════════════════════
+       SECURITY SCORE DEMO
+    ══════════════════════════════════════════════ */
+    .demo-section {
+      background: rgba(124,90,255,0.03);
+      border-top: 1px solid rgba(124,90,255,0.1);
+      border-bottom: 1px solid rgba(124,90,255,0.1);
+    }
+
+    .demo-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 64px; align-items: center;
+    }
+
+    .demo-visual {
+      position: relative; display: flex; justify-content: center;
+    }
+
+    .score-mockup {
+      width: 280px; height: 280px; position: relative;
+    }
+
+    .score-ring-svg { transform: rotate(-90deg); }
+
+    .score-ring-center {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+
+    .score-big-num {
+      font-family: var(--font-display); font-size: 64px; font-weight: 700;
+      color: var(--yellow); line-height: 1;
+      text-shadow: 0 0 30px rgba(251,191,36,0.4);
+    }
+
+    .score-big-label { font-size: 12px; color: var(--text-muted); letter-spacing: 2px; margin-top: 4px; }
+    .score-big-rating {
+      font-family: var(--font-display); font-size: 16px; font-weight: 600;
+      color: var(--yellow); letter-spacing: 3px; margin-top: 6px;
+    }
+
+    .floating-check {
+      position: absolute;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius-md);
+      padding: 8px 14px;
+      font-size: 11px; color: var(--text-secondary);
+      display: flex; align-items: center; gap: 8px;
+      animation: floatUp 3s ease infinite;
+      backdrop-filter: blur(8px);
+      white-space: nowrap;
+    }
+
+    .floating-check.pos1 { top: 20px;  right: -20px; animation-delay: 0s; }
+    .floating-check.pos2 { bottom: 40px; left: -30px; animation-delay: 1s; }
+    .floating-check.pos3 { top: 110px;  left: -40px; animation-delay: 2s; }
+
+    .fc-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .fc-dot.ok  { background: var(--green);  box-shadow: 0 0 6px rgba(52,211,153,0.6); }
+    .fc-dot.bad { background: var(--red);    box-shadow: 0 0 6px rgba(244,63,94,0.6); }
+    .fc-dot.warn{ background: var(--yellow); box-shadow: 0 0 6px rgba(251,191,36,0.6); }
+
+    /* ══════════════════════════════════════════════
+       THREAT INTELLIGENCE SECTION
+    ══════════════════════════════════════════════ */
+    .intel-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    .intel-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 20px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .intel-card:hover { border-color: rgba(124,90,255,0.3); background: rgba(255,255,255,0.05); }
+
+    .intel-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+
+    .intel-badge {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px;
+      padding: 3px 10px; border-radius: var(--radius-pill); text-transform: uppercase;
+    }
+    .intel-badge.malicious  { background: rgba(244,63,94,0.12);  color: var(--red);    border: 1px solid rgba(244,63,94,0.25); }
+    .intel-badge.suspicious { background: rgba(251,191,36,0.12); color: var(--yellow); border: 1px solid rgba(251,191,36,0.25); }
+    .intel-badge.clean      { background: rgba(52,211,153,0.1);  color: var(--green);  border: 1px solid rgba(52,211,153,0.2); }
+
+    .intel-time { font-size: 10px; color: var(--text-muted); margin-left: auto; }
+
+    .intel-name {
+      font-size: 12.5px; font-weight: 500; color: var(--text-primary);
+      font-family: 'Courier New', monospace; margin-bottom: 6px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .intel-meta { font-size: 11px; color: var(--text-muted); line-height: 1.6; }
+
+    .intel-engines {
+      display: flex; gap: 4px; flex-wrap: wrap; margin-top: 10px;
+    }
+
+    .intel-engine-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+    }
+
+    /* ══════════════════════════════════════════════
+       PRICING SECTION
+    ══════════════════════════════════════════════ */
+    .pricing-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 16px; align-items: start;
+    }
+
+    .pricing-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 32px 28px 28px;
+      transition: transform 0.25s, border-color 0.25s;
+      position: relative;
+    }
+
+    .pricing-card:hover { transform: translateY(-4px); }
+
+    .pricing-card.featured {
+      border-color: rgba(124,90,255,0.4);
+      background: rgba(124,90,255,0.06);
+      box-shadow: 0 0 40px rgba(124,90,255,0.12), 0 0 0 1px rgba(124,90,255,0.1);
+    }
+
+    .pricing-popular {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+      padding: 4px 16px; border-radius: var(--radius-pill);
+      background: linear-gradient(135deg, var(--purple), var(--indigo));
+      color: #fff; text-transform: uppercase;
+      box-shadow: 0 4px 14px rgba(124,90,255,0.4);
+      white-space: nowrap;
+    }
+
+    .pricing-tier {
+      font-size: 11px; font-weight: 600; color: var(--text-muted);
+      letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 10px;
+    }
+
+    .pricing-price {
+      font-family: var(--font-display); font-size: 42px; font-weight: 700;
+      color: var(--text-primary); line-height: 1; margin-bottom: 4px;
+    }
+
+    .pricing-price span { font-size: 18px; font-weight: 400; color: var(--text-muted); }
+
+    .pricing-period { font-size: 12px; color: var(--text-muted); margin-bottom: 24px; }
+
+    .pricing-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 24px 0; }
+
+    .pricing-features { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+
+    .pricing-feature {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; color: var(--text-secondary); font-weight: 300;
+    }
+
+    .pricing-check { font-size: 13px; flex-shrink: 0; }
+    .pricing-check.ok   { color: var(--green); }
+    .pricing-check.mute { color: var(--text-muted); }
+
+    .pricing-cta {
+      width: 100%; padding: 12px; border-radius: var(--radius-pill);
+      font-family: var(--font-body); font-size: 14px; font-weight: 600;
+      cursor: pointer; border: none; transition: all 0.2s;
+    }
+
+    .pricing-cta.outline {
+      background: transparent; color: var(--text-secondary);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .pricing-cta.outline:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+
+    .pricing-cta.filled {
+      background: linear-gradient(135deg, #7c5aff, #6366f1);
+      color: #fff; box-shadow: 0 4px 16px rgba(124,90,255,0.4);
+    }
+    .pricing-cta.filled:hover { box-shadow: 0 6px 22px rgba(124,90,255,0.6); transform: translateY(-1px); }
+
+    /* ══════════════════════════════════════════════
+       FAQ
+    ══════════════════════════════════════════════ */
+    .faq-list { max-width: 720px; display: flex; flex-direction: column; gap: 10px; }
+
+    .faq-item {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .faq-item:hover { border-color: rgba(124,90,255,0.25); }
+
+    .faq-question {
+      width: 100%; padding: 18px 22px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      background: transparent; border: none; cursor: pointer;
+      font-family: var(--font-body); font-size: 14px; font-weight: 500;
+      color: var(--text-primary); text-align: left;
+    }
+
+    .faq-arrow {
+      font-size: 12px; color: var(--text-muted); flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+
+    .faq-item.open .faq-arrow { transform: rotate(180deg); color: var(--purple-light); }
+
+    .faq-answer {
+      padding: 0 22px 18px;
+      font-size: 13px; font-weight: 300; color: var(--text-secondary); line-height: 1.85;
+      display: none;
+    }
+
+    .faq-item.open .faq-answer { display: block; animation: fadeIn 0.2s ease; }
+
+    /* ══════════════════════════════════════════════
+       CTA BANNER
+    ══════════════════════════════════════════════ */
+    .cta-banner {
+      margin: 0 24px 80px;
+      max-width: 1012px; margin-left: auto; margin-right: auto;
+      background: linear-gradient(135deg,
+        rgba(124,90,255,0.15) 0%,
+        rgba(99,102,241,0.08) 50%,
+        rgba(124,90,255,0.1) 100%);
+      border: 1px solid rgba(124,90,255,0.25);
+      border-radius: 24px;
+      padding: 64px 48px;
+      text-align: center;
+      position: relative; overflow: hidden;
+      animation: borderGlow 4s ease infinite;
+    }
+
+    .cta-banner::before {
+      content: '';
+      position: absolute; top: -40%; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 300px;
+      background: radial-gradient(ellipse at center, rgba(124,90,255,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-title {
+      font-family: var(--font-display); font-size: clamp(28px, 4vw, 46px);
+      font-weight: 600; letter-spacing: 4px; text-transform: uppercase;
+      color: var(--text-heading); margin-bottom: 16px; line-height: 1.1;
+    }
+
+    .cta-desc {
+      font-size: 14px; font-weight: 300; color: var(--text-secondary);
+      max-width: 480px; margin: 0 auto 36px; line-height: 1.9;
+    }
+
+    /* ══════════════════════════════════════════════
+       FOOTER
+    ══════════════════════════════════════════════ */
+    footer {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 48px 24px 32px;
+    }
+
+    .footer-inner {
+      max-width: 1060px; margin: 0 auto;
+      display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr;
+      gap: 48px;
+    }
+
+    .footer-brand { }
+
+    .footer-logo {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+    }
+
+    .footer-logo-icon {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, #7c5aff, #a78bfa);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-size: 13px; box-shadow: 0 0 10px rgba(124,90,255,0.4);
+    }
+
+    .footer-logo-text {
+      font-family: var(--font-display); font-size: 15px; font-weight: 700;
+      letter-spacing: 2px; color: var(--text-primary);
+    }
+
+    .footer-tagline {
+      font-size: 12.5px; font-weight: 300; color: var(--text-muted);
+      line-height: 1.8; max-width: 220px;
+    }
+
+    .footer-col-title {
+      font-size: 11px; font-weight: 600; letter-spacing: 2px;
+      color: var(--text-secondary); text-transform: uppercase; margin-bottom: 16px;
+    }
+
+    .footer-links { display: flex; flex-direction: column; gap: 10px; }
+
+    .footer-link {
+      font-size: 13px; font-weight: 300; color: var(--text-muted);
+      text-decoration: none; transition: color 0.18s;
+    }
+    .footer-link:hover { color: var(--purple-light); }
+
+    .footer-bottom {
+      max-width: 1060px; margin: 36px auto 0;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 12px;
+    }
+
+    .footer-copy { font-size: 12px; color: var(--text-muted); font-weight: 300; }
+
+    .footer-status {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11.5px; color: var(--green);
+    }
+
+    /* ══════════════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════════════ */
+    @media (max-width: 768px) {
+      .demo-grid        { grid-template-columns: 1fr; }
+      .demo-visual      { order: -1; }
+      .pricing-grid     { grid-template-columns: 1fr; }
+      .intel-grid       { grid-template-columns: 1fr; }
+      .footer-inner     { grid-template-columns: 1fr 1fr; gap: 32px; }
+      .how-grid         { grid-template-columns: 1fr 1fr; gap: 36px; }
+      .how-grid::before { display: none; }
+      .how-step         { padding: 0; }
+      .cta-banner       { padding: 44px 28px; }
+      .ticker-inner     { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; padding: 0 24px; }
+      .navbar           { overflow-x: auto; }
+      .hero-ring, .hero-ring-2 { display: none; }
+    }
+
+    @media (max-width: 520px) {
+      .footer-inner   { grid-template-columns: 1fr; }
+      .how-grid       { grid-template-columns: 1fr; }
+      .features-grid  { grid-template-columns: 1fr; }
+      .footer-bottom  { flex-direction: column; text-align: center; }
+      section         { padding: 64px 16px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ══ NAVBAR ══ -->
+  <div class="navbar-outer">
+    <nav class="navbar">
+      <a class="nav-logo" href="#">
+        <div class="nav-logo-icon">⬡</div>
+        <span class="nav-logo-text">REGSEC</span>
+      </a>
+      <a class="nav-item active" href="#">Home</a>
+      <a class="nav-item" href="filescan.html">Scanner <span class="nav-arrow">▾</span></a>
+      <a class="nav-item" href="regsec-registry.html">Registry Audit</a>
+      <a class="nav-item" href="#features">Features</a>
+      <a class="nav-item" href="#pricing">Pricing</a>
+      <div class="nav-lang">🌐 EN <span class="nav-arrow">▾</span></div>
+      <div class="nav-divider"></div>
+      <button class="nav-signin">Sign In</button>
+      <div class="nav-divider"></div>
+      <button class="nav-text-btn">Dashboard</button>
+    </nav>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       HERO
+  ══════════════════════════════════════════ -->
+  <section class="hero-section">
+    <div class="hero-glow"></div>
+    <div class="hero-ring"></div>
+    <div class="hero-ring-2"></div>
+
+    <div class="hero-eyebrow">
+      <span class="live-dot"></span>
+      Platform Online · 30+ Engines Active
+    </div>
+
+    <h1 class="hero-title">
+      <span class="hero-title-shimmer">REGSEC</span>
+    </h1>
+    <p class="hero-sub-title">Advanced PC Security Platform</p>
+
+    <p class="hero-desc">
+      Scan files, analyze URLs, audit your Windows Registry, and verify file integrity — all in your browser.
+      Enterprise-grade threat intelligence made accessible to everyone.
+    </p>
+
+    <div class="hero-cta-group">
+      <a class="btn-primary" href="filescan.html">⬡ Start Scanning Free</a>
+      <a class="btn-secondary" href="regsec-registry.html">📋 Registry Audit</a>
+    </div>
+
+    <!-- Terminal mock -->
+    <div class="hero-terminal">
+      <div class="terminal-header">
+        <div class="terminal-dot red"></div>
+        <div class="terminal-dot yellow"></div>
+        <div class="terminal-dot green"></div>
+        <span class="terminal-title">regsec — threat analysis engine v2.4.1</span>
+      </div>
+      <div class="terminal-body" id="terminalBody">
+        <div class="t-line"><span class="t-prompt">regsec $</span><span class="t-cmd"> scan --file "setup.exe" --engines all</span></div>
+        <span class="t-out t-info">[ INFO ] Loading 30 detection engines...</span>
+        <span class="t-out">[ ████████████████████ ] 100% complete</span>
+        <span class="t-out t-bad">[ ALERT ] 6/28 engines flagged: Trojan.Downloader</span>
+        <span class="t-out t-warn">[ WARN  ] File hash mismatch detected</span>
+        <span class="t-out t-bad">[ ALERT ] Verdict: MALICIOUS — do not execute</span>
+        <br/>
+        <div class="t-line"><span class="t-prompt">regsec $</span><span class="t-cmd"> audit --registry export.reg</span></div>
+        <span class="t-out t-info">[ INFO ] Scanning 12 security policies...</span>
+        <span class="t-out t-ok">[ PASS  ] UAC enabled · Firewall active · Defender on</span>
+        <span class="t-out t-bad">[ FAIL  ] SMBv1 enabled — critical vulnerability</span>
+        <span class="t-out t-warn">[ WARN  ] NTLMv2 not enforced · LM hash stored</span>
+        <span class="t-out t-info">[ SCORE ] Security rating: 58/100 — AT RISK</span>
+        <br/>
+        <div class="t-line"><span class="t-prompt">regsec $</span><span class="t-cmd"> <span class="cursor"></span></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ STATS TICKER ══ -->
+  <div class="stats-ticker">
+    <div class="ticker-inner">
+      <div class="ticker-stat">
+        <div>
+          <div class="ticker-num" id="tickScans">48,291</div>
+          <div class="ticker-label">Scans Today</div>
+        </div>
+      </div>
+      <div class="ticker-stat">
+        <div>
+          <div class="ticker-num">30+</div>
+          <div class="ticker-label">Detection Engines</div>
+        </div>
+      </div>
+      <div class="ticker-stat">
+        <div>
+          <div class="ticker-num" id="tickThreats">1,847</div>
+          <div class="ticker-label">Threats Caught</div>
+        </div>
+      </div>
+      <div class="ticker-stat">
+        <div>
+          <div class="ticker-num">99.8%</div>
+          <div class="ticker-label">Uptime</div>
+        </div>
+      </div>
+      <div class="ticker-stat">
+        <div>
+          <div class="ticker-num">0</div>
+          <div class="ticker-label">Files Stored</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════════════
+       FEATURES
+  ══════════════════════════════════════════ -->
+  <section id="features">
+    <div class="section-inner">
+      <div class="section-header">
+        <div class="section-eyebrow">⬡ Platform Features</div>
+        <h2 class="section-title">Everything You Need<br>To Stay Secure</h2>
+        <p class="section-desc">
+          REGSEC brings together file scanning, URL analysis, registry auditing, and cryptographic hash verification into one unified, privacy-first platform.
+        </p>
+      </div>
+
+      <div class="features-grid">
+
+        <div class="feature-card">
+          <div class="feature-icon-wrap purple">🔬</div>
+          <div class="feature-title">File Threat Scanner</div>
+          <div class="feature-desc">
+            Drop any file — .exe, .pdf, .zip, .js, and more — and instantly scan it against 30+ detection engines. Get a detailed verdict with per-engine results, threat labels, and a downloadable report.
+          </div>
+          <span class="feature-tag free">Free</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrap indigo">🔗</div>
+          <div class="feature-title">URL & Domain Scanner</div>
+          <div class="feature-desc">
+            Paste any URL, IP address, or domain to check it against threat intelligence databases. Detect phishing, malware distribution, botnet infrastructure, and command & control servers before you click.
+          </div>
+          <span class="feature-tag free">Free</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrap green">🔐</div>
+          <div class="feature-title">Hash Verification</div>
+          <div class="feature-desc">
+            Compute real SHA-256, SHA-1, and MD5 hashes from any file using the browser's native Web Crypto API. Compare against publisher checksums to detect modification, corruption, or tampering — character-level diff included.
+          </div>
+          <span class="feature-tag free">Free</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrap yellow">📋</div>
+          <div class="feature-title">Registry Security Audit</div>
+          <div class="feature-desc">
+            Export your Windows Registry and upload it to audit 12 critical security policies — UAC, Firewall, SMBv1, RDP, Defender, NTLMv2, LM Hash, and more. Get a weighted score out of 100 with step-by-step remediation.
+          </div>
+          <span class="feature-tag free">Free</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrap red">🛡</div>
+          <div class="feature-title">Threat Intelligence</div>
+          <div class="feature-desc">
+            Every scan is checked against a curated database of known malware signatures, ransomware families, PUPs, and exploit kits. Detection coverage spans ClamAV, Kaspersky, Bitdefender, CrowdStrike, SentinelOne, and 25 more.
+          </div>
+          <span class="feature-tag pro">Pro</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrap orange">📊</div>
+          <div class="feature-title">Scan History & Reports</div>
+          <div class="feature-desc">
+            Every analysis generates a complete downloadable report with hashes, engine results, threat labels, and remediation steps. Pro users get persistent scan history, team sharing, and API access.
+          </div>
+          <span class="feature-tag pro">Pro</span>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════════════
+       HOW IT WORKS
+  ══════════════════════════════════════════ -->
+  <section>
+    <div class="section-inner">
+      <div class="section-header">
+        <div class="section-eyebrow">⬡ How It Works</div>
+        <h2 class="section-title">Scan In Seconds</h2>
+        <p class="section-desc">No installation. No account required to get started. Everything runs directly in your browser.</p>
+      </div>
+
+      <div class="how-grid">
+        <div class="how-step">
+          <div class="how-step-num">
+            <span class="how-step-num-text">01</span>
+            <div class="how-step-icon">📁</div>
+          </div>
+          <div class="how-title">Upload or Paste</div>
+          <div class="how-desc">Drop a file into the scanner, paste a URL into the URL tab, or export and upload your Windows Registry file. No size limits on file scanning.</div>
+        </div>
+
+        <div class="how-step">
+          <div class="how-step-num">
+            <span class="how-step-num-text">02</span>
+            <div class="how-step-icon">⚙️</div>
+          </div>
+          <div class="how-title">Engine Analysis</div>
+          <div class="how-desc">REGSEC runs your submission through 30+ detection engines simultaneously, computing real cryptographic hashes and checking every known threat signature.</div>
+        </div>
+
+        <div class="how-step">
+          <div class="how-step-num">
+            <span class="how-step-num-text">03</span>
+            <div class="how-step-icon">📊</div>
+          </div>
+          <div class="how-title">Verdict & Score</div>
+          <div class="how-desc">Get a clear verdict — Clean, Suspicious, or Malicious — with per-engine breakdown, detected threat labels, and a security score for registry audits.</div>
+        </div>
+
+        <div class="how-step">
+          <div class="how-step-num">
+            <span class="how-step-num-text">04</span>
+            <div class="how-step-icon">🔧</div>
+          </div>
+          <div class="how-title">Remediate & Harden</div>
+          <div class="how-desc">Follow the step-by-step remediation guides generated for every failed check. Fix registry misconfigurations, disable vulnerable protocols, and harden your system.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════════════
+       SECURITY SCORE DEMO
+  ══════════════════════════════════════════ -->
+  <section class="demo-section">
+    <div class="section-inner">
+      <div class="demo-grid">
+
+        <div>
+          <div class="section-eyebrow">⬡ Registry Audit</div>
+          <h2 class="section-title">Your PC Has<br>A Security Score</h2>
+          <p class="section-desc" style="margin-bottom:28px;">
+            Most Windows machines ship with dangerous defaults. REGSEC checks 12 critical registry policies and produces a weighted security score with exact remediation steps for every failure.
+          </p>
+
+          <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:32px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 8px rgba(244,63,94,0.6);flex-shrink:0;"></div>
+              <div style="font-size:13px;color:var(--text-secondary);font-weight:300;"><strong style="color:var(--text-primary);font-weight:500;">SMBv1 Enabled</strong> — EternalBlue / WannaCry vector</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 8px rgba(244,63,94,0.6);flex-shrink:0;"></div>
+              <div style="font-size:13px;color:var(--text-secondary);font-weight:300;"><strong style="color:var(--text-primary);font-weight:500;">NTLMv2 Not Enforced</strong> — credential relay attacks</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--yellow);box-shadow:0 0 8px rgba(251,191,36,0.6);flex-shrink:0;"></div>
+              <div style="font-size:13px;color:var(--text-secondary);font-weight:300;"><strong style="color:var(--text-primary);font-weight:500;">RDP Exposed</strong> — brute-force risk without NLA</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px rgba(52,211,153,0.6);flex-shrink:0;"></div>
+              <div style="font-size:13px;color:var(--text-secondary);font-weight:300;"><strong style="color:var(--text-primary);font-weight:500;">UAC Active</strong> — elevation prompts working</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px rgba(52,211,153,0.6);flex-shrink:0;"></div>
+              <div style="font-size:13px;color:var(--text-secondary);font-weight:300;"><strong style="color:var(--text-primary);font-weight:500;">Defender Enabled</strong> — real-time protection active</div>
+            </div>
+          </div>
+
+          <a class="btn-primary" href="regsec-registry.html">Audit My Registry →</a>
+        </div>
+
+        <div class="demo-visual">
+          <div style="position:relative;">
+            <div class="score-mockup">
+              <svg class="score-ring-svg" width="280" height="280" viewBox="0 0 280 280">
+                <circle cx="140" cy="140" r="110" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="14"/>
+                <!-- 58% arc: circumference = 2π×110 ≈ 691.2, 58% = 400.9 -->
+                <circle cx="140" cy="140" r="110" fill="none"
+                  stroke="#fbbf24" stroke-width="14"
+                  stroke-dasharray="400.9 691.2"
+                  stroke-linecap="round"
+                  style="filter:drop-shadow(0 0 12px rgba(251,191,36,0.5));"/>
+                <!-- Background faint remainder -->
+                <circle cx="140" cy="140" r="88" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="8"/>
+                <circle cx="140" cy="140" r="88" fill="none"
+                  stroke="rgba(251,146,60,0.3)" stroke-width="8"
+                  stroke-dasharray="230 553.0"
+                  stroke-linecap="round"/>
+              </svg>
+              <div class="score-ring-center">
+                <div class="score-big-num">58</div>
+                <div class="score-big-label">/ 100</div>
+                <div class="score-big-rating">AT RISK</div>
+              </div>
+            </div>
+
+            <!-- Floating check badges -->
+            <div class="floating-check pos1">
+              <div class="fc-dot bad"></div>
+              SMBv1 — FAIL
+            </div>
+            <div class="floating-check pos2">
+              <div class="fc-dot ok"></div>
+              Defender — PASS
+            </div>
+            <div class="floating-check pos3">
+              <div class="fc-dot warn"></div>
+              NTLMv2 — WARN
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════════════
+       RECENT THREATS (live feed mock)
+  ══════════════════════════════════════════ -->
+  <section>
+    <div class="section-inner">
+      <div class="section-header">
+        <div class="section-eyebrow">⬡ Threat Intelligence Feed</div>
+        <h2 class="section-title">Live Detection Feed</h2>
+        <p class="section-desc">A sample of what our engines catch every day. Real verdicts from the REGSEC community.</p>
+      </div>
+
+      <div class="intel-grid" id="intelGrid">
+        <!-- filled by JS -->
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════════════
+       PRICING
+  ══════════════════════════════════════════ -->
+  <section id="pricing">
+    <div class="section-inner">
+      <div class="section-header">
+        <div class="section-eyebrow">⬡ Pricing</div>
+        <h2 class="section-title">Simple, Transparent Pricing</h2>
+        <p class="section-desc">Start free — no account needed. Upgrade for persistent history, API access, and team features.</p>
+      </div>
+
+      <div class="pricing-grid">
+
+        <!-- Free -->
+        <div class="pricing-card">
+          <div class="pricing-tier">Free</div>
+          <div class="pricing-price">$0<span>/mo</span></div>
+          <div class="pricing-period">No credit card required</div>
+          <div class="pricing-divider"></div>
+          <div class="pricing-features">
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> File & URL scanning</div>
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> Hash verification (SHA-256, SHA-1, MD5)</div>
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> Registry security audit</div>
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> 30+ detection engines</div>
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> Downloadable reports</div>
+            <div class="pricing-feature"><span class="pricing-check mute">–</span> Scan history</div>
+            <div class="pricing-feature"><span class="pricing-check mute">–</span> API access</div>
+            <div class="pricing-feature"><span class="pricing-check mute">–</span> Team sharing</div>
+          </div>
+          <button class="pricing-cta outline">Get Started Free</button>
+        </div>
+
+        <!-- Pro -->
+        <div class="pricing-card featured">
+          <div class="pricing-popular">Most Popular</div>
+          <div class="pricing-tier">Pro</div>
+          <div class="pricing-price">$9<span>/mo</span></div>
+          <div class="pricing-period">Billed monthly · cancel anytime</div>
+          <div class="pricing-divider"></div>
+          <div class="pricing-features">
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> Everything in Free</div>
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> Full scan history (90 days)</div>
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> REST API access</div>
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> Batch file scanning</div>
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> Priority analysis queue</div>
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> PDF report export</div>
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> Email threat alerts</div>
+            <div class="pricing-feature"><span class="pricing-check mute">–</span> Team workspaces</div>
+          </div>
+          <button class="pricing-cta filled">Start Pro Trial</button>
+        </div>
+
+        <!-- Enterprise -->
+        <div class="pricing-card">
+          <div class="pricing-tier">Enterprise</div>
+          <div class="pricing-price">Custom</div>
+          <div class="pricing-period">Volume licensing available</div>
+          <div class="pricing-divider"></div>
+          <div class="pricing-features">
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> Everything in Pro</div>
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> Unlimited scan history</div>
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> Team workspaces & SSO</div>
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> Dedicated API endpoint</div>
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> SLA guarantee</div>
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> Custom detection rules</div>
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> SIEM integration</div>
+            <div class="pricing-feature"><span class="pricing-check ok">✓</span> Priority support</div>
+          </div>
+          <button class="pricing-cta outline">Contact Sales</button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════════════
+       FAQ
+  ══════════════════════════════════════════ -->
+  <section>
+    <div class="section-inner">
+      <div class="section-header">
+        <div class="section-eyebrow">⬡ FAQ</div>
+        <h2 class="section-title">Common Questions</h2>
+      </div>
+
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Is my file actually uploaded anywhere?
+            <span class="faq-arrow">▼</span>
+          </button>
+          <div class="faq-answer">
+            No. All file analysis, hash computation, and registry parsing happens entirely in your browser using local JavaScript. Your files never leave your device. The only data that leaves your machine in a production integration would be file hashes sent to threat intelligence APIs — never the file content itself.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            How do I export my Windows Registry?
+            <span class="faq-arrow">▼</span>
+          </button>
+          <div class="faq-answer">
+            Open <strong>regedit.exe</strong> (press Win+R, type regedit, press Enter). Go to File → Export. Under Export Range, select <strong>All</strong>. Choose a save location, give it a name, and click Save. The resulting .reg file can then be uploaded to the REGSEC Registry Audit tool.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            What does "hash verification" actually check?
+            <span class="faq-arrow">▼</span>
+          </button>
+          <div class="faq-answer">
+            When you download software, the publisher typically provides a known-good SHA-256 or MD5 hash. REGSEC computes the real cryptographic hash of your downloaded file using the browser's Web Crypto API (for SHA-256/SHA-1) and a pure-JS MD5 implementation. If your file's hash doesn't match the publisher's, the file may have been modified, corrupted in transit, or replaced with malware.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Are the 30+ detection engines real?
+            <span class="faq-arrow">▼</span>
+          </button>
+          <div class="faq-answer">
+            The current browser-based version uses a deterministic simulation to demonstrate the interface. In a production deployment with API keys, REGSEC connects to real threat intelligence feeds from engines including ClamAV, Kaspersky, Bitdefender, CrowdStrike, SentinelOne, and more. Hash verification is fully real — those SHA-256, SHA-1, and MD5 values are genuine cryptographic hashes of your file.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            What registry policies does the audit check?
+            <span class="faq-arrow">▼</span>
+          </button>
+          <div class="faq-answer">
+            The audit checks 12 critical Windows security settings: User Account Control (UAC), Windows Firewall (Domain & Private profiles), AutoRun configuration, SMBv1 protocol status, Remote Desktop access, LM hash storage, NTLMv2 authentication level, Windows Defender real-time protection, automatic update policy, Windows Script Host restrictions, and Safe DLL Search Mode. Each check is weighted by severity.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Can I use REGSEC for my whole team?
+            <span class="faq-arrow">▼</span>
+          </button>
+          <div class="faq-answer">
+            Yes — the Enterprise plan includes team workspaces, SSO integration, shared scan history, and a dedicated API endpoint. Contact us to discuss volume licensing and custom detection rule configuration for your organisation.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ CTA BANNER ══ -->
+  <div class="cta-banner">
+    <div class="section-eyebrow" style="margin-bottom:22px;">⬡ Get Started Today</div>
+    <h2 class="cta-title">Secure Your PC<br>In Under 60 Seconds</h2>
+    <p class="cta-desc">
+      No account needed. No install. Drop a file, paste a URL, or upload your registry export and get results instantly.
+    </p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a class="btn-primary" href="filescan.html">⬡ Launch Scanner</a>
+      <a class="btn-secondary" href="regsec-registry.html">📋 Registry Audit</a>
+    </div>
+  </div>
+
+  <!-- ══ FOOTER ══ -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <div class="footer-logo-icon">⬡</div>
+          <span class="footer-logo-text">REGSEC</span>
+        </div>
+        <p class="footer-tagline">Advanced PC security analysis. Privacy-first. No file uploads. Browser-native.</p>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Platform</div>
+        <div class="footer-links">
+          <a class="footer-link" href="filescan.html">File Scanner</a>
+          <a class="footer-link" href="filescan.html">URL Scanner</a>
+          <a class="footer-link" href="filescan.html">Hash Verifier</a>
+          <a class="footer-link" href="regsec-registry.html">Registry Audit</a>
+          <a class="footer-link" href="#">Dashboard</a>
+        </div>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Resources</div>
+        <div class="footer-links">
+          <a class="footer-link" href="#">Documentation</a>
+          <a class="footer-link" href="#">API Reference</a>
+          <a class="footer-link" href="#">Threat Glossary</a>
+          <a class="footer-link" href="#">Security Blog</a>
+          <a class="footer-link" href="#">Changelog</a>
+        </div>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Company</div>
+        <div class="footer-links">
+          <a class="footer-link" href="#">About</a>
+          <a class="footer-link" href="#">Privacy Policy</a>
+          <a class="footer-link" href="#">Terms of Service</a>
+          <a class="footer-link" href="#">Contact</a>
+          <a class="footer-link" href="#">Status</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2025 REGSEC. All rights reserved. Built for the privacy-conscious.</div>
+      <div class="footer-status">
+        <span class="live-dot"></span>
+        All systems operational
+      </div>
+    </div>
+  </footer>
+
+</div><!-- /page -->
+
+<script>
+'use strict';
+
+// ── FAQ toggle ────────────────────────────────
+function toggleFaq(btn) {
+  const item = btn.closest('.faq-item');
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+
+// ── Animated counter ──────────────────────────
+function animateCount(el, target, suffix = '') {
+  let v = 0;
+  const step = Math.ceil(target / 70);
+  const t = setInterval(() => {
+    v = Math.min(v + step, target);
+    el.textContent = v.toLocaleString() + suffix;
+    if (v >= target) clearInterval(t);
+  }, 18);
+}
+
+// ── Intersection observer for scroll animations ─
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.opacity    = '1';
+      entry.target.style.transform  = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.12 });
+
+document.querySelectorAll('.feature-card, .how-step, .pricing-card, .intel-card, .faq-item').forEach(el => {
+  el.style.opacity   = '0';
+  el.style.transform = 'translateY(20px)';
+  el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+  observer.observe(el);
+});
+
+// ── Ticker counters ───────────────────────────
+window.addEventListener('load', () => {
+  const scans   = document.getElementById('tickScans');
+  const threats = document.getElementById('tickThreats');
+  if (scans)   animateCount(scans,   48291);
+  if (threats) animateCount(threats,  1847);
+});
+
+// ── Threat intel feed mock ────────────────────
+const FEED_DATA = [
+  {
+    verdict: 'malicious',
+    name: 'crack_photoshop_2024.exe',
+    engines: [28, 6],
+    threat: 'Trojan.Downloader · Adware.BrowseFox',
+    time: '2m ago',
+    type: 'file',
+    dots: ['bad','bad','bad','bad','bad','bad','ok','ok','ok','ok','ok','ok'],
+  },
+  {
+    verdict: 'suspicious',
+    name: 'http://free-gift-cards-now.ru/win',
+    engines: [28, 3],
+    threat: 'Phishing · Credential Harvesting',
+    time: '5m ago',
+    type: 'url',
+    dots: ['bad','bad','bad','ok','ok','ok','ok','ok','ok','ok','ok','ok'],
+  },
+  {
+    verdict: 'clean',
+    name: 'VLC_3.0.21_win64.exe',
+    engines: [28, 0],
+    threat: 'No threats detected',
+    time: '8m ago',
+    type: 'file',
+    dots: ['ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok'],
+  },
+];
+
+function buildIntelCard(item) {
+  const dotHTML = item.dots.map(d => `<div class="intel-engine-dot" style="background:${d==='bad'?'var(--red)':d==='warn'?'var(--yellow)':'rgba(52,211,153,0.5)'};box-shadow:${d==='bad'?'0 0 5px rgba(244,63,94,0.5)':d==='ok'?'0 0 3px rgba(52,211,153,0.3)':'none'};width:7px;height:7px;border-radius:50%;"></div>`).join('');
+
+  const card = document.createElement('div');
+  card.className = 'intel-card';
+  card.innerHTML = `
+    <div class="intel-header">
+      <div class="intel-badge ${item.verdict}">${item.verdict.toUpperCase()}</div>
+      <div style="font-size:12px;">${item.type === 'file' ? '📁' : '🔗'}</div>
+      <div class="intel-time">${item.time}</div>
+    </div>
+    <div class="intel-name">${item.name}</div>
+    <div class="intel-meta">${item.threat}<br>${item.engines[1]}/${item.engines[0]} engines flagged</div>
+    <div class="intel-engines" style="margin-top:10px;gap:3px;display:flex;flex-wrap:wrap;">${dotHTML}</div>
+  `;
+  return card;
+}
+
+const intelGrid = document.getElementById('intelGrid');
+if (intelGrid) {
+  FEED_DATA.forEach(item => intelGrid.appendChild(buildIntelCard(item)));
+}
+
+// ── Live-update ticker every 8 seconds ───────
+let scanCount   = 48291;
+let threatCount = 1847;
+
+setInterval(() => {
+  scanCount   += Math.floor(Math.random() * 4) + 1;
+  threatCount += Math.random() < 0.3 ? 1 : 0;
+
+  const s = document.getElementById('tickScans');
+  const t = document.getElementById('tickThreats');
+  if (s) s.textContent = scanCount.toLocaleString();
+  if (t) t.textContent = threatCount.toLocaleString();
+}, 8000);
+
+// ── Smooth scroll for nav anchor links ───────
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const id = a.getAttribute('href');
+    if (id === '#') return;
+    const target = document.querySelector(id);
+    if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+  });
+});
+</script>
+</body>
+</html>
